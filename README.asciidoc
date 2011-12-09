@@ -1,5 +1,4 @@
-Neo4j JDBC driver
-=================
+=Neo4j JDBC driver=
 
 This is a first attempt at creating a JDBC driver for the graph database Neo4j. While Neo4j is a graph database, and
 JDBC is based on the relational paradigm, this driver provides a way to bridge this gap.
@@ -10,8 +9,8 @@ the properties that the node can have (i.e. "columns"). For each instance of thi
 the instance to the type node via the IS_A relationship. By using this structure the JDBC driver can mimic a relational database,
 and provide a means to execute queries against the Neo4j server.
 
-Setup
-=====
+===Setup===
+
 * Install a Neo4j server, and start it with the REST API enabled.
 * Add as many TYPE nodes as you want
 * For each type node, add as many HAS_PROPERTY nodes as you want
@@ -19,15 +18,15 @@ Setup
 * Add as many instance nodes as you want, with the defined properties, and relate them to their
   type node with the IS_A relationship
 
-Usage
-=====
+===Usage===
+
 * Add the JDBC driver jar file to your applications classpath
-* Load the driver with the class "org.neo4j.jdbc.Driver"
-* Connect with URLs on the form "jdbc:neo4j://<host>:<port>/", e.g. "jdbc:neo4j://localhost:7474/"
+* Load the driver with the class +org.neo4j.jdbc.Driver+
+* Connect with URLs on the form +jdbc:neo4j://<host>:<port>/+, e.g. +jdbc:neo4j://localhost:7474/+
 * Execute queries using the Cypher graph query language
 
-Using with DbVisualizer
-=======================
+===Using with DbVisualizer===
+
 One of the first tests I did with the driver was to connect to Neo4j using the DbVisualizer tool (www.dbvis.com/).
 Here is how you can try it out:
 * Download and install DbVIsualizer
