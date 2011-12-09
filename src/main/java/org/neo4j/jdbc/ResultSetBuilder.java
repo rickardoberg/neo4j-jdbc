@@ -1,0 +1,90 @@
+/**
+ * Copyright (c) 2002-2011 "Neo Technology,"
+ * Network Engine for Objects in Lund AB [http://neotechnology.com]
+ *
+ * This file is part of Neo4j.
+ *
+ * Neo4j is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package org.neo4j.jdbc;
+
+import java.sql.ResultSet;
+import java.sql.Types;
+import java.util.*;
+
+/**
+ * TODO
+ */
+public class ResultSetBuilder
+{
+    private List<ListResultSet.ColumnMetaData> columns = new ArrayList<ListResultSet.ColumnMetaData>();
+
+    private List<List<Object>> data = new ArrayList<List<Object>>();
+
+    private List<Object> currentRow = new ArrayList<Object>();
+
+    public ResultSetBuilder column(String name, String typeName, int type)
+    {
+        columns.add(new ListResultSet.ColumnMetaData(name, typeName, type));
+        return this;
+    }
+
+    public ResultSetBuilder column(String name)
+    {
+        return column(name, "String", Types.VARCHAR);
+    }
+
+    public ResultSetBuilder rowData(Collection<Object> values)
+    {
+        currentRow = new ArrayList<Object>();
+        currentRow.addAll(values);
+
+        for (int i = currentRow.size(); i < columns.size(); i++)
+            currentRow.add(null);
+
+        data.add(currentRow);
+        return this;
+    }
+
+    public ResultSetBuilder row(Object... values)
+    {
+        return rowData(Arrays.asList(values));
+    }
+
+    public ResultSetBuilder cell(String name, Object value)
+    {
+        int i = getColumnIndex(name);
+        if (i == -1)
+            throw new IllegalArgumentException("No such column declared:"+name);
+        currentRow.set(i, value);
+        return this;
+    }
+
+    public ResultSet newResultSet()
+    {
+        return new ListResultSet(columns, data);
+    }
+
+    private int getColumnIndex(String name)
+    {
+        for (int i = 0; i < columns.size(); i++)
+        {
+            ListResultSet.ColumnMetaData columnMetaData = columns.get(i);
+            if (columnMetaData.getName().equals(name))
+                return i;
+        }
+        return -1;
+    }
+}
