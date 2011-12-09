@@ -1,4 +1,4 @@
-=Neo4j JDBC driver=
+==Neo4j JDBC driver==
 
 This is a first attempt at creating a JDBC driver for the graph database Neo4j. While Neo4j is a graph database, and
 JDBC is based on the relational paradigm, this driver provides a way to bridge this gap.
