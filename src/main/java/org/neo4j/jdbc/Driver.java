@@ -56,7 +56,7 @@ public class Driver
         ClientResource resource = new ClientResource(context, ref);
         resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
 
-        return new Neo4jConnection(resource);
+        return CallProxy.proxy(Connection.class, new Neo4jConnection(resource));
     }
 
     public boolean acceptsURL(String s) throws SQLException

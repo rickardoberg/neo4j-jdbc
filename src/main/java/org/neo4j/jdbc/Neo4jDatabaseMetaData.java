@@ -21,6 +21,7 @@
 package org.neo4j.jdbc;
 
 import java.sql.*;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.neo4j.jdbc.DriverQueries.QUERIES;
@@ -53,7 +54,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getURL() throws SQLException
     {
-        return null;
+        return connection.getURL().toExternalForm();
     }
 
     @Override
@@ -65,7 +66,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public boolean isReadOnly() throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
@@ -167,7 +168,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public boolean supportsMixedCaseQuotedIdentifiers() throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
@@ -191,7 +192,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getIdentifierQuoteString() throws SQLException
     {
-        return null;
+        return "\"";
     }
 
     @Override
@@ -233,7 +234,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getExtraNameCharacters() throws SQLException
     {
-        return null;
+        return "";
     }
 
     @Override
@@ -425,7 +426,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getCatalogSeparator() throws SQLException
     {
-        return null;
+        return ".";
     }
 
     @Override
@@ -761,7 +762,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getTables(String s, String s1, String s2, String[] strings) throws SQLException
     {
-        ExecutionResult result = connection.executeQuery(QUERIES.getTables());
+        ResultSet result = connection.executeQuery(QUERIES.getTables());
         ResultSetBuilder rs = new ResultSetBuilder();
         rs.column("TABLE_CAT").
                 column("TABLE_SCHEM").
@@ -774,9 +775,9 @@ public class Neo4jDatabaseMetaData
                 column("SELF_REFERENCING_COL_NAME").
                 column("REF_GENERATION");
 
-        for (Map<String, Object> row : result)
+        while (result.next())
         {
-            rs.row().cell("TABLE_SCHEM","Default").cell("TABLE_NAME", row.get("type.type")).cell("TABLE_TYPE", "TABLE");
+            rs.row().cell("TABLE_SCHEM","Default").cell("TABLE_NAME", result.getString("type.type")).cell("TABLE_TYPE", "TABLE");
         }
         return rs.newResultSet();
     }
@@ -804,7 +805,7 @@ public class Neo4jDatabaseMetaData
     }
 
     @Override
-    public ResultSet getColumns(String s, String s1, String s2, String s3) throws SQLException
+    public ResultSet getColumns(String catalog, String schemaPattern, String tableNamePattern, String columnNamePattern) throws SQLException
     {
         ResultSetBuilder rs = new ResultSetBuilder();
         rs.column("TABLE_CAT").
@@ -831,11 +832,11 @@ public class Neo4jDatabaseMetaData
                 column("SOURCE_DATA_TYPE").
                 column("IS_AUTOINCREMENT");
 
-        ExecutionResult result = connection.executeQuery(QUERIES.getColumns());
-        for (Map<String, Object> rows : result)
+        ResultSet result = connection.executeQuery(QUERIES.getColumns(tableNamePattern));
+        while (result.next())
         {
-            rs.row().cell("TABLE_NAME", rows.get("type.type")).
-                    cell("COLUMN_NAME", rows.get("property.name")).
+            rs.row().cell("TABLE_NAME", result.getString("type.type")).
+                    cell("COLUMN_NAME", result.getString("property.name")).
                     cell("DATA_TYPE", Types.VARCHAR).
                     cell("TYPE_NAME", String.class.getSimpleName());
         }
@@ -863,7 +864,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getVersionColumns(String s, String s1, String s2) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override

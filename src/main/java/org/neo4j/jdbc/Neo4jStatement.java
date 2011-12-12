@@ -21,6 +21,7 @@
 package org.neo4j.jdbc;
 
 import java.sql.*;
+import java.util.Collections;
 import java.util.Map;
 
 import static org.neo4j.jdbc.DriverQueries.QUERIES;
@@ -31,8 +32,8 @@ import static org.neo4j.jdbc.DriverQueries.QUERIES;
 public class Neo4jStatement
     implements Statement
 {
-    private Neo4jConnection connection;
-    private ResultSet resultSet;
+    protected Neo4jConnection connection;
+    protected ResultSet resultSet;
 
     public Neo4jStatement(Neo4jConnection connection)
     {
@@ -42,12 +43,14 @@ public class Neo4jStatement
     @Override
     public ResultSet executeQuery(String s) throws SQLException
     {
-        return null;
+        execute(s);
+        return resultSet;
     }
 
     @Override
     public int executeUpdate(String s) throws SQLException
     {
+        execute(s);
         return 0;
     }
 
@@ -127,31 +130,19 @@ public class Neo4jStatement
                 int idx2 = s.lastIndexOf("$", idx);
                 final String type = s.substring(idx2+2, idx-1);
 
-                ExecutionResult columns = connection.executeQuery(QUERIES.getColumns(type));
+                ResultSet columns = connection.executeQuery(QUERIES.getColumns(type));
                 StringBuilder columnsBuilder = new StringBuilder();
-                for (Map<String,Object> column: columns)
+                while (columns.next())
                 {
                     if (columnsBuilder.length() > 0)
                         columnsBuilder.append(',');
-                    columnsBuilder.append(column.get("property.name"));
+                    columnsBuilder.append(columns.getString("property.name"));
                 }
 
                 s = s.substring(0, idx2)+columnsBuilder.toString()+s.substring(idx, s.length());
             }
 
-            ExecutionResult result = connection.executeQuery(s);
-
-            ResultSetBuilder rs = new ResultSetBuilder();
-            for (String column : result.columns())
-            {
-                rs.column(column);
-            }
-
-            for (Map<String,Object> row: result)
-            {
-                rs.rowData(row.values());
-            }
-            resultSet = rs.newResultSet();
+            resultSet = connection.executeQuery(s, Collections.<String, Object>emptyMap());
             return true;
         } catch (Throwable e)
         {
@@ -208,7 +199,7 @@ public class Neo4jStatement
     @Override
     public int getResultSetType() throws SQLException
     {
-        return 0;
+        return ResultSet.TYPE_FORWARD_ONLY;
     }
 
     @Override

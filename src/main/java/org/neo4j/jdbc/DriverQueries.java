@@ -21,8 +21,11 @@
 package org.neo4j.jdbc;
 
 import org.neo4j.cypherdsl.Execute;
+import org.neo4j.cypherdsl.ExecuteWithParameters;
+import org.neo4j.cypherdsl.query.Expression;
 
 import static org.neo4j.cypherdsl.CypherQuery.start;
+import static org.neo4j.cypherdsl.query.Expression.param;
 import static org.neo4j.cypherdsl.query.MatchExpression.path;
 import static org.neo4j.cypherdsl.query.ReturnExpression.properties;
 import static org.neo4j.cypherdsl.query.StartExpression.node;
@@ -49,11 +52,11 @@ public class DriverQueries
                 returns(properties("type.type", "property.name", "property.type"));
     }
 
-    public Execute getColumns(String typeName)
+    public ExecuteWithParameters getColumns(String typeName)
     {
         return start(node("n", 0)).
                 match(path().from("n").out("TYPE").to("type").link().out("HAS_PROPERTY").to("property")).
-                where(prop("type.type").eq(typeName)).
-                returns(properties("type.type", "property.name", "property.type"));
+                where(prop("type.type").eq(param("typename"))).
+                returns(properties("type.type", "property.name", "property.type")).parameter("typename", typeName);
     }
 }

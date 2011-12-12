@@ -36,7 +36,8 @@ public class RestDriverTest
     @Test
     public void testConnect() throws SQLException
     {
-        new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+        Connection connect = new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+        connect.close();
     }
 
     @Test

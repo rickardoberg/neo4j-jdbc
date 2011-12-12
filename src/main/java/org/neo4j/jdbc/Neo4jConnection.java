@@ -22,16 +22,18 @@ package org.neo4j.jdbc;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.node.ObjectNode;
 import org.neo4j.cypherdsl.Execute;
+import org.neo4j.cypherdsl.ExecuteWithParameters;
 import org.restlet.Client;
 import org.restlet.data.MediaType;
 import org.restlet.data.Preference;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.ClientResource;
-import org.restlet.resource.ResourceException;
 
 import java.io.IOException;
+import java.net.URL;
 import java.sql.*;
 import java.util.*;
 
@@ -42,29 +44,25 @@ public class Neo4jConnection
     implements Connection
 {
     private boolean closed = false;
-    private ClientResource resource;
+    private URL url;
+    private ClientResource cypherResource;
     private ObjectMapper mapper = new ObjectMapper();
 
-    public Neo4jConnection(ClientResource resource) throws SQLException
+    public Neo4jConnection(ClientResource rootResource) throws SQLException
     {
+        url = rootResource.getReference().toUrl();
+
         try
         {
             // Get service root
-            {
-                JsonNode node = mapper.readTree(resource.get().getReader());
-                resource = new ClientResource(resource.getContext(),node.get("data").getTextValue());
-                resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
-            }
+            JsonNode node = mapper.readTree(rootResource.get().getReader());
+            ClientResource dataResource = new ClientResource(rootResource.getContext(),node.get("data").getTextValue());
+            dataResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
 
             // Get Cypher extension
-            {
-                JsonNode node = mapper.readTree(resource.get().getReader());
-                resource = new ClientResource(resource.getContext(),node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue());
-                resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
-            }
-
-            // Store this resource
-            this.resource = resource;
+            node = mapper.readTree(dataResource.get().getReader());
+            cypherResource = new ClientResource(dataResource.getContext(),node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue());
+            cypherResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
         } catch (IOException e)
         {
             throw new SQLNonTransientConnectionException(e);
@@ -73,45 +71,57 @@ public class Neo4jConnection
 
     public Statement createStatement() throws SQLException
     {
-        return new Neo4jStatement(this);
+        return CallProxy.proxy(Statement.class, new Neo4jStatement(this));
     }
 
     public PreparedStatement prepareStatement(String s) throws SQLException
     {
-        return null;
+        return CallProxy.proxy(PreparedStatement.class, new Neo4jPreparedStatement(this, s));
     }
 
-    public CallableStatement prepareCall(String s) throws SQLException
+    @Override
+    public CallableStatement prepareCall(String sql) throws SQLException
     {
         return null;
     }
 
-    public String nativeSQL(String s) throws SQLException
+    @Override
+    public String nativeSQL(String sql) throws SQLException
     {
         return null;
     }
 
-    public void setAutoCommit(boolean b) throws SQLException
+    @Override
+    public void setAutoCommit(boolean autoCommit) throws SQLException
     {
     }
 
+    @Override
     public boolean getAutoCommit() throws SQLException
     {
         return false;
     }
 
+    @Override
     public void commit() throws SQLException
     {
-
     }
 
+    @Override
     public void rollback() throws SQLException
     {
-
     }
 
     public void close() throws SQLException
     {
+        try
+        {
+            ((Client)cypherResource.getNext()).stop();
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
         closed = true;
     }
 
@@ -124,203 +134,265 @@ public class Neo4jConnection
     {
         Neo4jDatabaseMetaData metaData = new Neo4jDatabaseMetaData(this);
 
-        return metaData;
+        return CallProxy.proxy(DatabaseMetaData.class, metaData);
     }
 
-    public void setReadOnly(boolean b) throws SQLException
+    @Override
+    public void setReadOnly(boolean readOnly) throws SQLException
     {
     }
 
+    @Override
     public boolean isReadOnly() throws SQLException
     {
         return false;
     }
 
-    public void setCatalog(String s) throws SQLException
+    @Override
+    public void setCatalog(String catalog) throws SQLException
     {
     }
 
+    @Override
     public String getCatalog() throws SQLException
     {
         return null;
     }
 
-    public void setTransactionIsolation(int i) throws SQLException
+    @Override
+    public void setTransactionIsolation(int level) throws SQLException
     {
     }
 
+    @Override
     public int getTransactionIsolation() throws SQLException
     {
         return 0;
     }
 
+    @Override
     public SQLWarning getWarnings() throws SQLException
     {
-        return null;
+        return new SQLWarning("Something went wrong, but I don't know what!");
     }
 
+    @Override
     public void clearWarnings() throws SQLException
     {
     }
 
-    public Statement createStatement(int i, int i1) throws SQLException
+    @Override
+    public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException
+    {
+        return CallProxy.proxy(Statement.class, new Neo4jStatement(this));
+    }
+
+    @Override
+    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
+    {
+        return CallProxy.proxy(PreparedStatement.class, new Neo4jPreparedStatement(this, sql));
+    }
+
+    @Override
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
     {
         return null;
     }
 
-    public PreparedStatement prepareStatement(String s, int i, int i1) throws SQLException
-    {
-        return null;
-    }
-
-    public CallableStatement prepareCall(String s, int i, int i1) throws SQLException
-    {
-        return null;
-    }
-
+    @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException
     {
         return null;
     }
 
-    public void setTypeMap(Map<String, Class<?>> stringClassMap) throws SQLException
+    @Override
+    public void setTypeMap(Map<String, Class<?>> map) throws SQLException
     {
     }
 
-    public void setHoldability(int i) throws SQLException
+    @Override
+    public void setHoldability(int holdability) throws SQLException
     {
     }
 
+    @Override
     public int getHoldability() throws SQLException
     {
         return 0;
     }
 
+    @Override
     public Savepoint setSavepoint() throws SQLException
     {
         return null;
     }
 
-    public Savepoint setSavepoint(String s) throws SQLException
+    @Override
+    public Savepoint setSavepoint(String name) throws SQLException
     {
         return null;
     }
 
+    @Override
     public void rollback(Savepoint savepoint) throws SQLException
     {
     }
 
+    @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException
     {
     }
 
-    public Statement createStatement(int i, int i1, int i2) throws SQLException
+    @Override
+    public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
         return null;
     }
 
-    public PreparedStatement prepareStatement(String s, int i, int i1, int i2) throws SQLException
+    @Override
+    public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
         return null;
     }
 
-    public CallableStatement prepareCall(String s, int i, int i1, int i2) throws SQLException
+    @Override
+    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
         return null;
     }
 
-    public PreparedStatement prepareStatement(String s, int i) throws SQLException
+    @Override
+    public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException
     {
         return null;
     }
 
-    public PreparedStatement prepareStatement(String s, int[] ints) throws SQLException
+    @Override
+    public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException
     {
         return null;
     }
 
-    public PreparedStatement prepareStatement(String s, String[] strings) throws SQLException
+    @Override
+    public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException
     {
         return null;
     }
 
+    @Override
     public Clob createClob() throws SQLException
     {
         return null;
     }
 
+    @Override
     public Blob createBlob() throws SQLException
     {
         return null;
     }
 
+    @Override
     public NClob createNClob() throws SQLException
     {
         return null;
     }
 
+    @Override
     public SQLXML createSQLXML() throws SQLException
     {
         return null;
     }
 
-    public boolean isValid(int i) throws SQLException
+    @Override
+    public boolean isValid(int timeout) throws SQLException
     {
         return false;
     }
 
-    public void setClientInfo(String s, String s1) throws SQLClientInfoException
+    @Override
+    public void setClientInfo(String name, String value) throws SQLClientInfoException
     {
     }
 
+    @Override
     public void setClientInfo(Properties properties) throws SQLClientInfoException
     {
     }
 
-    public String getClientInfo(String s) throws SQLException
+    @Override
+    public String getClientInfo(String name) throws SQLException
     {
         return null;
     }
 
+    @Override
     public Properties getClientInfo() throws SQLException
     {
         return null;
     }
 
-    public Array createArrayOf(String s, Object[] objects) throws SQLException
+    @Override
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException
     {
         return null;
     }
 
-    public Struct createStruct(String s, Object[] objects) throws SQLException
+    @Override
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException
     {
         return null;
     }
 
-    public <T> T unwrap(Class<T> tClass) throws SQLException
+    @Override
+    public <T> T unwrap(Class<T> iface) throws SQLException
     {
         return null;
     }
 
-    public boolean isWrapperFor(Class<?> aClass) throws SQLException
+    @Override
+    public boolean isWrapperFor(Class<?> iface) throws SQLException
     {
         return false;
     }
 
-    ExecutionResult executeQuery(Execute execute) throws SQLException
+    ResultSet executeQuery(Execute execute) throws SQLException
     {
-        return executeQuery(execute.toString());
+        if (execute instanceof ExecuteWithParameters)
+            return executeQuery(execute.toString(), ((ExecuteWithParameters)execute).getParameters());
+        else
+            return executeQuery(execute.toString(), Collections.<String, Object>emptyMap());
     }
 
-    ExecutionResult executeQuery(String query) throws SQLException
+    ResultSet executeQuery(String query, Map<String, Object> parameters) throws SQLException
     {
+        if (query.equals(" WHERE  ( 0 = 1 ) "))
+            return new ResultSetBuilder().newResultSet();
+
         query = query.replace('\"', '\'');
         query = query.replace('\n',' ');
         System.out.println("Execute query:"+query);
-        Representation req = new StringRepresentation("{\"query\": \""+query+"\",\"params\": {}}", MediaType.APPLICATION_JSON);
+
+        ObjectNode queryNode = mapper.createObjectNode();
+        queryNode.put("query", query);
+        ObjectNode params = mapper.createObjectNode();
+        for (Map.Entry<String, Object> stringObjectEntry : parameters.entrySet())
+        {
+            Object value = stringObjectEntry.getValue();
+            if (value instanceof String)
+                params.put(stringObjectEntry.getKey(), value.toString());
+            else if (value instanceof Integer)
+                params.put(stringObjectEntry.getKey(), (Integer)value);
+            else if (value instanceof Long)
+                params.put(stringObjectEntry.getKey(), (Long)value);
+            else if (value instanceof Boolean)
+                params.put(stringObjectEntry.getKey(), (Boolean)value);
+        }
+        queryNode.put("params", params);
+
+        Representation req = new StringRepresentation(queryNode.toString(), MediaType.APPLICATION_JSON);
         try
         {
-            Representation rep = resource.post(req);
+            Representation rep = cypherResource.post(req);
             JsonNode node = mapper.readTree(rep.getReader());
 
             List<String> columns = new ArrayList<String>();
@@ -340,10 +412,31 @@ public class Neo4jConnection
                 }
                 data.add(rowData);
             }
-            return new ExecutionResult(columns, data);
+            return toResultSet(new ExecutionResult(columns, data));
         } catch (Throwable e)
         {
             throw new SQLException(e);
         }
+    }
+
+    URL getURL()
+    {
+        return url;
+    }
+
+    protected ResultSet toResultSet(ExecutionResult result)
+    {
+        ResultSetBuilder rs = new ResultSetBuilder();
+        for (String column : result.columns())
+        {
+            rs.column(column);
+        }
+
+        for (Map<String,Object> row: result)
+        {
+            rs.rowData(row.values());
+        }
+
+        return rs.newResultSet();
     }
 }

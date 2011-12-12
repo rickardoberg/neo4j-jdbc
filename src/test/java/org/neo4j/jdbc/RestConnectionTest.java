@@ -21,10 +21,7 @@
 package org.neo4j.jdbc;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -41,6 +38,18 @@ public class RestConnectionTest
     public static void before() throws SQLException
     {
         conn = new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+    }
+
+    @AfterClass
+    public static void after()
+    {
+        try
+        {
+            conn.close();
+        } catch (Throwable e)
+        {
+            e.printStackTrace();
+        }
     }
 
     @Test

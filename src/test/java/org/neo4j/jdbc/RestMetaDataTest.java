@@ -20,9 +20,12 @@
 
 package org.neo4j.jdbc;
 
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.security.PrivateKey;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -32,13 +35,24 @@ import java.sql.SQLException;
  */
 public class RestMetaDataTest
 {
+    private static Connection conn;
 
-    private Connection conn;
-
-    @Before
-    public void before() throws SQLException
+    @BeforeClass
+    public static void before() throws SQLException
     {
         conn = new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+    }
+
+    @AfterClass
+    public static void after()
+    {
+        try
+        {
+            conn.close();
+        } catch (Throwable e)
+        {
+            e.printStackTrace();
+        }
     }
 
     @Test
