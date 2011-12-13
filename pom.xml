@@ -74,13 +74,11 @@
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
             <version>1.9.1</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
             <version>1.9.1</version>
-            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

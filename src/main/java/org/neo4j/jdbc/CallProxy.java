@@ -20,6 +20,9 @@
 
 package org.neo4j.jdbc;
 
+import javax.swing.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -37,6 +40,11 @@ public class CallProxy
         return clazz.cast(Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, new CallProxy(next)));
     }
 
+    private static void log(final String str)
+    {
+        System.out.println(str);
+    }
+
     private Object next;
 
     public CallProxy(Object next)
@@ -49,7 +57,7 @@ public class CallProxy
     {
         if (!method.getDeclaringClass().equals(Object.class))
         {
-            String call = method.getName()+"(";
+            String call = method.getDeclaringClass().getSimpleName()+"."+method.getName()+"(";
             if (args != null)
             {
                 String comma = "";
@@ -61,15 +69,17 @@ public class CallProxy
             }
             call+=")";
 
-            System.out.println(call);
+            log(call+"\n");
             try
             {
-                Object result = method.invoke(next, args);
-                System.out.println("->"+result);
+                final Object result = method.invoke(next, args);
+                log("->"+result+"\n");
                 return result;
             } catch (InvocationTargetException e)
             {
-                e.printStackTrace();
+                StringWriter str = new StringWriter();
+                PrintWriter print = new PrintWriter(str, true);
+                e.printStackTrace(print);
                 throw e.getTargetException();
             }
         } else

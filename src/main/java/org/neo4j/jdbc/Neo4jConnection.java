@@ -26,16 +26,23 @@ import org.codehaus.jackson.node.ObjectNode;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
 import org.restlet.Client;
+import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Preference;
+import org.restlet.data.Reference;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.ClientResource;
+import org.restlet.resource.ResourceException;
 
 import java.io.IOException;
 import java.net.URL;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.neo4j.jdbc.DriverQueries.QUERIES;
 
 /**
  * TODO
@@ -44,19 +51,26 @@ public class Neo4jConnection
     implements Connection
 {
     private boolean closed = false;
-    private URL url;
+    private String url;
     private ClientResource cypherResource;
     private ObjectMapper mapper = new ObjectMapper();
 
-    public Neo4jConnection(ClientResource rootResource) throws SQLException
+    public Neo4jConnection(String url, Client client) throws SQLException
     {
-        url = rootResource.getReference().toUrl();
+        this.url = url;
 
         try
         {
+            url  = "http"+url.substring("jdbc:neo4j".length());
+            Reference ref = new Reference(new Reference(url), "/");
+            Context context = new Context();
+            context.setClientDispatcher(client);
+            ClientResource resource = new ClientResource(context, ref);
+            resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
+
             // Get service root
-            JsonNode node = mapper.readTree(rootResource.get().getReader());
-            ClientResource dataResource = new ClientResource(rootResource.getContext(),node.get("data").getTextValue());
+            JsonNode node = mapper.readTree(resource.get().getReader());
+            ClientResource dataResource = new ClientResource(resource.getContext(),node.get("data").getTextValue());
             dataResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
 
             // Get Cypher extension
@@ -156,7 +170,7 @@ public class Neo4jConnection
     @Override
     public String getCatalog() throws SQLException
     {
-        return null;
+        return "Default";
     }
 
     @Override
@@ -173,7 +187,7 @@ public class Neo4jConnection
     @Override
     public SQLWarning getWarnings() throws SQLException
     {
-        return new SQLWarning("Something went wrong, but I don't know what!");
+        return null;
     }
 
     @Override
@@ -202,7 +216,7 @@ public class Neo4jConnection
     @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException
     {
-        return null;
+        return new HashMap<String, Class<?>>();
     }
 
     @Override
@@ -246,13 +260,13 @@ public class Neo4jConnection
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
-        return null;
+        return CallProxy.proxy(Statement.class, new Neo4jStatement(this));
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
-        return null;
+        return CallProxy.proxy(PreparedStatement.class, new Neo4jPreparedStatement(this, sql));
     }
 
     @Override
@@ -346,7 +360,7 @@ public class Neo4jConnection
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException
     {
-        return null;
+        return (T) this;
     }
 
     @Override
@@ -355,7 +369,8 @@ public class Neo4jConnection
         return false;
     }
 
-    ResultSet executeQuery(Execute execute) throws SQLException
+    // Connection helpers
+    public ResultSet executeQuery(Execute execute) throws SQLException
     {
         if (execute instanceof ExecuteWithParameters)
             return executeQuery(execute.toString(), ((ExecuteWithParameters)execute).getParameters());
@@ -363,11 +378,8 @@ public class Neo4jConnection
             return executeQuery(execute.toString(), Collections.<String, Object>emptyMap());
     }
 
-    ResultSet executeQuery(String query, Map<String, Object> parameters) throws SQLException
+    public ResultSet executeQuery(String query, Map<String, Object> parameters) throws SQLException
     {
-        if (query.equals(" WHERE  ( 0 = 1 ) "))
-            return new ResultSetBuilder().newResultSet();
-
         query = query.replace('\"', '\'');
         query = query.replace('\n',' ');
         System.out.println("Execute query:"+query);
@@ -413,13 +425,30 @@ public class Neo4jConnection
                 data.add(rowData);
             }
             return toResultSet(new ExecutionResult(columns, data));
+        } catch (ResourceException e)
+        {
+            throw new SQLException(e.getStatus().getReasonPhrase());
         } catch (Throwable e)
         {
             throw new SQLException(e);
         }
     }
 
-    URL getURL()
+    public String tableColumns(String tableName, String columnPrefix) throws SQLException
+    {
+        ResultSet columns = executeQuery(QUERIES.getColumns(tableName));
+        StringBuilder columnsBuilder = new StringBuilder();
+        while (columns.next())
+        {
+            if (columnsBuilder.length() > 0)
+                columnsBuilder.append(',');
+            columnsBuilder.append(columnPrefix).append(columns.getString("property.name"));
+        }
+        return columnsBuilder.toString();
+    }
+
+
+    String getURL()
     {
         return url;
     }

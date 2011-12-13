@@ -54,7 +54,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getURL() throws SQLException
     {
-        return connection.getURL().toExternalForm();
+        return connection.getURL();
     }
 
     @Override
@@ -198,31 +198,31 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getSQLKeywords() throws SQLException
     {
-        return null;
+        return "";
     }
 
     @Override
     public String getNumericFunctions() throws SQLException
     {
-        return null;
+        return "";
     }
 
     @Override
     public String getStringFunctions() throws SQLException
     {
-        return null;
+        return "";
     }
 
     @Override
     public String getSystemFunctions() throws SQLException
     {
-        return null;
+        return "";
     }
 
     @Override
     public String getTimeDateFunctions() throws SQLException
     {
-        return null;
+        return "";
     }
 
     @Override
@@ -420,7 +420,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public boolean isCatalogAtStart() throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
@@ -777,7 +777,7 @@ public class Neo4jDatabaseMetaData
 
         while (result.next())
         {
-            rs.row().cell("TABLE_SCHEM","Default").cell("TABLE_NAME", result.getString("type.type")).cell("TABLE_TYPE", "TABLE");
+            rs.row().cell("TABLE_CAT", "Default").cell("TABLE_SCHEM","Default").cell("TABLE_NAME", result.getString("type.type")).cell("TABLE_TYPE", "TABLE");
         }
         return rs.newResultSet();
     }
@@ -787,7 +787,7 @@ public class Neo4jDatabaseMetaData
     {
         return new ResultSetBuilder().
                 column("TABLE_SCHEM").column("TABLE_CATALOG").
-                row().cell("TABLE_SCHEM", "Default").newResultSet();
+                row().cell("TABLE_SCHEM", "Default").cell("TABLE_CATALOG","Default").newResultSet();
     }
 
     @Override
@@ -814,9 +814,9 @@ public class Neo4jDatabaseMetaData
                 column("COLUMN_NAME").
                 column("DATA_TYPE", "Integer", Types.INTEGER).
                 column("TYPE_NAME").
-                column("COLUMN_SIZE").
+                column("COLUMN_SIZE", "Integer", Types.INTEGER).
                 column("BUFFER_LENGTH").
-                column("DECIMAL_DIGITS").
+                column("DECIMAL_DIGITS", "Integer", Types.INTEGER).
                 column("NUM_PREC_RADIX").
                 column("NULLABLE").
                 column("REMARKS").
@@ -835,30 +835,35 @@ public class Neo4jDatabaseMetaData
         ResultSet result = connection.executeQuery(QUERIES.getColumns(tableNamePattern));
         while (result.next())
         {
-            rs.row().cell("TABLE_NAME", result.getString("type.type")).
+            rs.row().
+                    cell("TABLE_CAT", "Default").
+                    cell("TABLE_SCHEM", "Default").
+                    cell("TABLE_NAME", result.getString("type.type")).
                     cell("COLUMN_NAME", result.getString("property.name")).
+                    cell("COLUMN_SIZE", 256).
+                    cell("DECIMAL_DIGITS", 256).
                     cell("DATA_TYPE", Types.VARCHAR).
-                    cell("TYPE_NAME", String.class.getSimpleName());
+                    cell("TYPE_NAME", "VARCHAR");
         }
-        return rs.newResultSet();
+        return CallProxy.proxy(ResultSet.class, rs.newResultSet());
     }
 
     @Override
     public ResultSet getColumnPrivileges(String s, String s1, String s2, String s3) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getTablePrivileges(String s, String s1, String s2) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getBestRowIdentifier(String s, String s1, String s2, int i, boolean b) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
@@ -883,61 +888,61 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getImportedKeys(String s, String s1, String s2) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getExportedKeys(String s, String s1, String s2) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getCrossReference(String s, String s1, String s2, String s3, String s4, String s5) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getTypeInfo() throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getIndexInfo(String s, String s1, String s2, boolean b, boolean b1) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public boolean supportsResultSetType(int i) throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
     public boolean supportsResultSetConcurrency(int i, int i1) throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
     public boolean ownUpdatesAreVisible(int i) throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
     public boolean ownDeletesAreVisible(int i) throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
     public boolean ownInsertsAreVisible(int i) throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
@@ -985,13 +990,13 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getUDTs(String s, String s1, String s2, int[] ints) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public Connection getConnection() throws SQLException
     {
-        return null;
+        return connection;
     }
 
     @Override
@@ -1009,7 +1014,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public boolean supportsMultipleOpenResults() throws SQLException
     {
-        return false;
+        return true;
     }
 
     @Override
@@ -1051,7 +1056,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public int getDatabaseMajorVersion() throws SQLException
     {
-        return 0;
+        return 1;
     }
 
     @Override
@@ -1063,7 +1068,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public int getJDBCMajorVersion() throws SQLException
     {
-        return 0;
+        return 3;
     }
 
     @Override
@@ -1099,7 +1104,10 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getSchemas(String s, String s1) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().
+                column("TABLE_SCHEM").column("TABLE_CATALOG").
+                row().cell("TABLE_SCHEM", "Default").cell("TABLE_CATALOG", "Default").
+                newResultSet();
     }
 
     @Override
@@ -1117,25 +1125,25 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getClientInfoProperties() throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getFunctions(String s, String s1, String s2) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public ResultSet getFunctionColumns(String s, String s1, String s2, String s3) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet();
     }
 
     @Override
     public <T> T unwrap(Class<T> tClass) throws SQLException
     {
-        return null;
+        return (T) this;
     }
 
     @Override

@@ -123,25 +123,6 @@ public class Neo4jStatement
     {
         try
         {
-
-            if (s.contains(".columns$"))
-            {
-                int idx = s.indexOf(".columns$");
-                int idx2 = s.lastIndexOf("$", idx);
-                final String type = s.substring(idx2+2, idx-1);
-
-                ResultSet columns = connection.executeQuery(QUERIES.getColumns(type));
-                StringBuilder columnsBuilder = new StringBuilder();
-                while (columns.next())
-                {
-                    if (columnsBuilder.length() > 0)
-                        columnsBuilder.append(',');
-                    columnsBuilder.append(columns.getString("property.name"));
-                }
-
-                s = s.substring(0, idx2)+columnsBuilder.toString()+s.substring(idx, s.length());
-            }
-
             resultSet = connection.executeQuery(s, Collections.<String, Object>emptyMap());
             return true;
         } catch (Throwable e)

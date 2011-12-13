@@ -203,7 +203,9 @@ public class Neo4jPreparedStatement
     public ResultSetMetaData getMetaData() throws SQLException
     {
         if (resultSet == null)
-            throw new SQLException("Prepared statement has been closed");
+        {
+            execute();
+        }
 
         return resultSet.getMetaData();
     }

@@ -20,6 +20,8 @@
 
 package org.neo4j.jdbc;
 
+import org.neo4j.jdbc.ext.DbVisualizerConnection;
+import org.neo4j.jdbc.ext.LibreOfficeConnection;
 import org.restlet.Client;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
@@ -49,14 +51,13 @@ public class Driver
 
     public Connection connect(String s, Properties properties) throws SQLException
     {
-        s = "http"+s.substring("jdbc:neo4j".length());
-        Reference ref = new Reference(new Reference(s), "/");
-        Context context = new Context();
-        context.setClientDispatcher(client);
-        ClientResource resource = new ClientResource(context, ref);
-        resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
-
-        return CallProxy.proxy(Connection.class, new Neo4jConnection(resource));
+        // Check for specific tools that needs workarounds
+        if (System.getProperties().containsKey("org.openoffice.native"))
+            return CallProxy.proxy(Connection.class, new LibreOfficeConnection(s, client));
+        else if (System.getProperties().containsKey("dbvis.ScriptsTreeShowDetails"))
+            return CallProxy.proxy(Connection.class, new DbVisualizerConnection(s, client));
+        else
+            return CallProxy.proxy(Connection.class, new Neo4jConnection(s, client));
     }
 
     public boolean acceptsURL(String s) throws SQLException

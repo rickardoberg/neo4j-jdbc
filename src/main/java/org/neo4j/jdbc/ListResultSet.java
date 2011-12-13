@@ -97,7 +97,11 @@ public class ListResultSet
     @Override
     public int getInt(int i) throws SQLException
     {
-        return (Integer) data.get(current).get(i-1);
+        Object value = data.get(current).get(i - 1);
+        if (value == null || !(value instanceof Integer))
+            return 0;
+        else
+            return (Integer) value;
     }
 
     @Override
@@ -293,7 +297,7 @@ public class ListResultSet
     @Override
     public ResultSetMetaData getMetaData() throws SQLException
     {
-        return new ListMapResultSetMetaData();
+        return CallProxy.proxy(ResultSetMetaData.class, new ListMapResultSetMetaData());
     }
 
     @Override
