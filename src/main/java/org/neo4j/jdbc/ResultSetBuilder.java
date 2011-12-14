@@ -20,7 +20,9 @@
 
 package org.neo4j.jdbc;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.util.*;
 
@@ -72,9 +74,9 @@ public class ResultSetBuilder
         return this;
     }
 
-    public ResultSet newResultSet()
+    public ResultSet newResultSet(Connection connection) throws SQLException
     {
-        return new ListResultSet(columns, data);
+        return new ListResultSet(columns, data, connection.unwrap(Neo4jConnection.class));
     }
 
     private int getColumnIndex(String name)

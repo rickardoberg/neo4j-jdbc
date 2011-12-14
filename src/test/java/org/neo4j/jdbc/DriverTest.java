@@ -20,12 +20,14 @@
 
 package org.neo4j.jdbc;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * TODO
@@ -45,5 +47,13 @@ public class DriverTest
     {
         Assert.assertTrue(driver.acceptsURL("jdbc:neo4j://localhost:7474/db/data"));
         Assert.assertTrue(!driver.acceptsURL("jdbc:derby://localhost:7474/"));
+    }
+
+    @Test
+    public void testURLProperties() throws SQLException
+    {
+        Neo4jConnection conn = (Neo4jConnection) driver.connect("jdbc:neo4j://localhost:7474/?debug=false", new Properties());
+
+        Assert.assertThat(conn.getProperties().getProperty("debug"), CoreMatchers.equalTo("false"));
     }
 }

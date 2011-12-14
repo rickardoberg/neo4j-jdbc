@@ -42,11 +42,13 @@ public class ListResultSet
     private int current = -1;
     private List<ColumnMetaData> columns;
     private List<List<Object>> data;
+    private Neo4jConnection conn;
 
-    public ListResultSet(List<ColumnMetaData> columns, List<List<Object>> data)
+    public ListResultSet(List<ColumnMetaData> columns, List<List<Object>> data, Neo4jConnection conn)
     {
         this.columns = columns;
         this.data = data;
+        this.conn = conn;
     }
 
     @Override
@@ -297,7 +299,7 @@ public class ListResultSet
     @Override
     public ResultSetMetaData getMetaData() throws SQLException
     {
-        return CallProxy.proxy(ResultSetMetaData.class, new ListMapResultSetMetaData());
+        return conn.debug(new ListMapResultSetMetaData());
     }
 
     @Override

@@ -36,7 +36,6 @@ public class CallProxy
 {
     public static <T> T proxy(Class<T> clazz, T next)
     {
-//        return next;
         return clazz.cast(Proxy.newProxyInstance(clazz.getClassLoader(), new Class[]{clazz}, new CallProxy(next)));
     }
 
@@ -69,11 +68,12 @@ public class CallProxy
             }
             call+=")";
 
-            log(call+"\n");
+            log(call);
             try
             {
                 final Object result = method.invoke(next, args);
-                log("->"+result+"\n");
+                if (!method.getReturnType().equals(Void.TYPE))
+                    log("->"+result+"\n");
                 return result;
             } catch (InvocationTargetException e)
             {

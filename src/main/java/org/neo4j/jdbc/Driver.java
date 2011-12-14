@@ -51,13 +51,18 @@ public class Driver
 
     public Connection connect(String s, Properties properties) throws SQLException
     {
+        parseUrlProperties(s, properties);
+
         // Check for specific tools that needs workarounds
+        Neo4jConnection conn;
         if (System.getProperties().containsKey("org.openoffice.native"))
-            return CallProxy.proxy(Connection.class, new LibreOfficeConnection(s, client));
+            conn = new LibreOfficeConnection(s, client, properties);
         else if (System.getProperties().containsKey("dbvis.ScriptsTreeShowDetails"))
-            return CallProxy.proxy(Connection.class, new DbVisualizerConnection(s, client));
+            conn = new DbVisualizerConnection(s, client, properties);
         else
-            return CallProxy.proxy(Connection.class, new Neo4jConnection(s, client));
+            conn = new Neo4jConnection(s, client, properties);
+
+        return conn.debug(conn);
     }
 
     public boolean acceptsURL(String s) throws SQLException
@@ -83,5 +88,27 @@ public class Driver
     public boolean jdbcCompliant()
     {
         return true;
+    }
+
+    private void parseUrlProperties(String s, Properties properties)
+    {
+        if (s.contains("?"))
+        {
+            String urlProps = s.substring(s.indexOf('?')+1);
+            String[] props = urlProps.split(",");
+            for (String prop : props)
+            {
+                int idx = prop.indexOf('=');
+                if (idx != -1)
+                {
+                    String key = prop.substring(0, idx);
+                    String value = prop.substring(idx+1);
+                    properties.put(key, value);
+                } else
+                {
+                    properties.put(prop, "true");
+                }
+            }
+        }
     }
 }

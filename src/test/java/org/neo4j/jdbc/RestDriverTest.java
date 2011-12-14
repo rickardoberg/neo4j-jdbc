@@ -27,6 +27,7 @@ import org.junit.Test;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * TODO
@@ -36,7 +37,7 @@ public class RestDriverTest
     @Test
     public void testConnect() throws SQLException
     {
-        Connection connect = new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+        Connection connect = new Driver().connect("jdbc:neo4j://localhost:7474/", new Properties());
         connect.close();
     }
 

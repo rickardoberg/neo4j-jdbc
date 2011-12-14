@@ -52,12 +52,16 @@ public class Neo4jConnection
 {
     private boolean closed = false;
     private String url;
+    private Properties properties;
     private ClientResource cypherResource;
     private ObjectMapper mapper = new ObjectMapper();
+    private boolean debug;
 
-    public Neo4jConnection(String url, Client client) throws SQLException
+    public Neo4jConnection(String url, Client client, Properties properties) throws SQLException
     {
         this.url = url;
+        this.properties = properties;
+        this.debug = "true".equalsIgnoreCase(properties.getProperty("debug"));
 
         try
         {
@@ -85,12 +89,12 @@ public class Neo4jConnection
 
     public Statement createStatement() throws SQLException
     {
-        return CallProxy.proxy(Statement.class, new Neo4jStatement(this));
+        return debug(new Neo4jStatement(this));
     }
 
     public PreparedStatement prepareStatement(String s) throws SQLException
     {
-        return CallProxy.proxy(PreparedStatement.class, new Neo4jPreparedStatement(this, s));
+        return debug(new Neo4jPreparedStatement(this, s));
     }
 
     @Override
@@ -146,9 +150,7 @@ public class Neo4jConnection
 
     public DatabaseMetaData getMetaData() throws SQLException
     {
-        Neo4jDatabaseMetaData metaData = new Neo4jDatabaseMetaData(this);
-
-        return CallProxy.proxy(DatabaseMetaData.class, metaData);
+        return debug(new Neo4jDatabaseMetaData(this));
     }
 
     @Override
@@ -198,13 +200,13 @@ public class Neo4jConnection
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException
     {
-        return CallProxy.proxy(Statement.class, new Neo4jStatement(this));
+        return debug(new Neo4jStatement(this));
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
     {
-        return CallProxy.proxy(PreparedStatement.class, new Neo4jPreparedStatement(this, sql));
+        return debug(new Neo4jPreparedStatement(this, sql));
     }
 
     @Override
@@ -260,13 +262,13 @@ public class Neo4jConnection
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
-        return CallProxy.proxy(Statement.class, new Neo4jStatement(this));
+        return debug(new Neo4jStatement(this));
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
-        return CallProxy.proxy(PreparedStatement.class, new Neo4jPreparedStatement(this, sql));
+        return debug(new Neo4jPreparedStatement(this, sql));
     }
 
     @Override
@@ -382,7 +384,6 @@ public class Neo4jConnection
     {
         query = query.replace('\"', '\'');
         query = query.replace('\n',' ');
-        System.out.println("Execute query:"+query);
 
         ObjectNode queryNode = mapper.createObjectNode();
         queryNode.put("query", query);
@@ -453,7 +454,7 @@ public class Neo4jConnection
         return url;
     }
 
-    protected ResultSet toResultSet(ExecutionResult result)
+    protected ResultSet toResultSet(ExecutionResult result) throws SQLException
     {
         ResultSetBuilder rs = new ResultSetBuilder();
         for (String column : result.columns())
@@ -466,6 +467,21 @@ public class Neo4jConnection
             rs.rowData(row.values());
         }
 
-        return rs.newResultSet();
+        return rs.newResultSet(this);
+    }
+
+    public <T> T debug(T obj)
+    {
+        if (debug)
+        {
+            Class intf = obj.getClass().getInterfaces()[0];
+            return (T) CallProxy.proxy(intf, obj);
+        } else
+            return obj;
+    }
+
+    public Properties getProperties()
+    {
+        return properties;
     }
 }

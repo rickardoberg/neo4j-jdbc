@@ -27,8 +27,10 @@ import org.junit.Test;
 
 import java.security.PrivateKey;
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * TODO
@@ -40,7 +42,9 @@ public class RestMetaDataTest
     @BeforeClass
     public static void before() throws SQLException
     {
-        conn = new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+        DriverManager.registerDriver(new Driver());
+
+        conn = DriverManager.getConnection("jdbc:neo4j://localhost:7474/?debug=true", new Properties());
     }
 
     @AfterClass

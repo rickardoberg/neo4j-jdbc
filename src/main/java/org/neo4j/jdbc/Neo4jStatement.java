@@ -140,12 +140,13 @@ public class Neo4jStatement
     @Override
     public int getUpdateCount() throws SQLException
     {
-        return 0;
+        return -1;
     }
 
     @Override
     public boolean getMoreResults() throws SQLException
     {
+        resultSet = null;
         return false;
     }
 

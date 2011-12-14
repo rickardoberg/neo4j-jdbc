@@ -28,6 +28,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,9 +38,9 @@ import java.util.regex.Pattern;
 public class LibreOfficeConnection
     extends Neo4jConnection
 {
-    public LibreOfficeConnection(String url, Client client) throws SQLException
+    public LibreOfficeConnection(String url, Client client, Properties properties) throws SQLException
     {
-        super(url, client);
+        super(url, client, properties);
     }
 
     @Override
@@ -85,7 +86,7 @@ public class LibreOfficeConnection
 
         {
             if (query.equals(" WHERE  ( 0 = 1 ) "))
-                        return new ResultSetBuilder().newResultSet();
+                        return new ResultSetBuilder().newResultSet(debug(this));
         }
 
         return super.executeQuery(query, parameters);

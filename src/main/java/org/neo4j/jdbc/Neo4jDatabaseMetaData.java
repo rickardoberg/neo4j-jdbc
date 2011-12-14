@@ -779,7 +779,7 @@ public class Neo4jDatabaseMetaData
         {
             rs.row().cell("TABLE_CAT", "Default").cell("TABLE_SCHEM","Default").cell("TABLE_NAME", result.getString("type.type")).cell("TABLE_TYPE", "TABLE");
         }
-        return rs.newResultSet();
+        return rs.newResultSet(connection);
     }
 
     @Override
@@ -787,13 +787,13 @@ public class Neo4jDatabaseMetaData
     {
         return new ResultSetBuilder().
                 column("TABLE_SCHEM").column("TABLE_CATALOG").
-                row().cell("TABLE_SCHEM", "Default").cell("TABLE_CATALOG","Default").newResultSet();
+                row().cell("TABLE_SCHEM", "Default").cell("TABLE_CATALOG","Default").newResultSet(connection);
     }
 
     @Override
     public ResultSet getCatalogs() throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
@@ -801,7 +801,7 @@ public class Neo4jDatabaseMetaData
     {
         return new ResultSetBuilder().
                 column("TABLE_TYPE").
-                row().cell("TABLE_TYPE", "TABLE").newResultSet();
+                row().cell("TABLE_TYPE", "TABLE").newResultSet(connection);
     }
 
     @Override
@@ -845,31 +845,31 @@ public class Neo4jDatabaseMetaData
                     cell("DATA_TYPE", Types.VARCHAR).
                     cell("TYPE_NAME", "VARCHAR");
         }
-        return CallProxy.proxy(ResultSet.class, rs.newResultSet());
+        return connection.debug(rs.newResultSet(connection));
     }
 
     @Override
     public ResultSet getColumnPrivileges(String s, String s1, String s2, String s3) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getTablePrivileges(String s, String s1, String s2) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getBestRowIdentifier(String s, String s1, String s2, int i, boolean b) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getVersionColumns(String s, String s1, String s2) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
@@ -882,37 +882,37 @@ public class Neo4jDatabaseMetaData
                 column("COLUMN_NAME").
                 column("KEY_SEQ", Short.class.getSimpleName(), Types.SMALLINT).
                 column("PK_NAME").
-                newResultSet();
+                newResultSet(connection);
     }
 
     @Override
     public ResultSet getImportedKeys(String s, String s1, String s2) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getExportedKeys(String s, String s1, String s2) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getCrossReference(String s, String s1, String s2, String s3, String s4, String s5) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getTypeInfo() throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getIndexInfo(String s, String s1, String s2, boolean b, boolean b1) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
@@ -990,7 +990,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getUDTs(String s, String s1, String s2, int[] ints) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
@@ -1107,7 +1107,7 @@ public class Neo4jDatabaseMetaData
         return new ResultSetBuilder().
                 column("TABLE_SCHEM").column("TABLE_CATALOG").
                 row().cell("TABLE_SCHEM", "Default").cell("TABLE_CATALOG", "Default").
-                newResultSet();
+                newResultSet(connection);
     }
 
     @Override
@@ -1125,19 +1125,19 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getClientInfoProperties() throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getFunctions(String s, String s1, String s2) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getFunctionColumns(String s, String s1, String s2, String s3) throws SQLException
     {
-        return new ResultSetBuilder().newResultSet();
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override

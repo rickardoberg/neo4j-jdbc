@@ -26,6 +26,7 @@ import org.junit.*;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * TODO
@@ -37,7 +38,7 @@ public class RestConnectionTest
     @BeforeClass
     public static void before() throws SQLException
     {
-        conn = new Driver().connect("jdbc:neo4j://localhost:7474/", null);
+        conn = new Driver().connect("jdbc:neo4j://localhost:7474/", new Properties());
     }
 
     @AfterClass

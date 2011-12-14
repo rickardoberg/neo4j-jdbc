@@ -21,17 +21,12 @@
 package org.neo4j.jdbc.ext;
 
 import org.neo4j.jdbc.Neo4jConnection;
-import org.neo4j.jdbc.ResultSetBuilder;
 import org.restlet.Client;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static org.neo4j.jdbc.DriverQueries.QUERIES;
+import java.util.Properties;
 
 /**
  * DbVisualizer specific Neo4j connection. Contains workarounds to get it to work with DbVisualizer.
@@ -39,9 +34,9 @@ import static org.neo4j.jdbc.DriverQueries.QUERIES;
 public class DbVisualizerConnection
     extends Neo4jConnection
 {
-    public DbVisualizerConnection(String url, Client client) throws SQLException
+    public DbVisualizerConnection(String url, Client client, Properties properties) throws SQLException
     {
-        super(url, client);
+        super(url, client, properties);
     }
 
     @Override
