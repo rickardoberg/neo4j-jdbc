@@ -37,15 +37,21 @@ public class ResultSetBuilder
 
     private List<Object> currentRow = new ArrayList<Object>();
 
-    public ResultSetBuilder column(String name, String typeName, int type)
+    public ResultSetBuilder column(String name, int type)
     {
+        String typeName = null;
+        if (type == Types.VARCHAR)
+            typeName = String.class.getName();
+        else if (type == Types.INTEGER)
+            typeName = Integer.class.getName();
+        
         columns.add(new ListResultSet.ColumnMetaData(name, typeName, type));
         return this;
     }
 
     public ResultSetBuilder column(String name)
     {
-        return column(name, "String", Types.VARCHAR);
+        return column(name, Types.VARCHAR);
     }
 
     public ResultSetBuilder rowData(Collection<Object> values)

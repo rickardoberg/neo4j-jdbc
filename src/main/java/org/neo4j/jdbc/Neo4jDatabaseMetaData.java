@@ -21,8 +21,6 @@
 package org.neo4j.jdbc;
 
 import java.sql.*;
-import java.util.Collections;
-import java.util.Map;
 
 import static org.neo4j.jdbc.DriverQueries.QUERIES;
 
@@ -750,13 +748,13 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getProcedures(String s, String s1, String s2) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public ResultSet getProcedureColumns(String s, String s1, String s2, String s3) throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
@@ -787,13 +785,13 @@ public class Neo4jDatabaseMetaData
     {
         return new ResultSetBuilder().
                 column("TABLE_SCHEM").column("TABLE_CATALOG").
-                row().cell("TABLE_SCHEM", "Default").cell("TABLE_CATALOG","Default").newResultSet(connection);
+                row("Default","Default").newResultSet(connection);
     }
 
     @Override
     public ResultSet getCatalogs() throws SQLException
     {
-        return new ResultSetBuilder().newResultSet(connection);
+        return new ResultSetBuilder().column("TABLE_CAT").row("Default").newResultSet(connection);
     }
 
     @Override
@@ -801,7 +799,7 @@ public class Neo4jDatabaseMetaData
     {
         return new ResultSetBuilder().
                 column("TABLE_TYPE").
-                row().cell("TABLE_TYPE", "TABLE").newResultSet(connection);
+                row("TABLE").newResultSet(connection);
     }
 
     @Override
@@ -812,11 +810,11 @@ public class Neo4jDatabaseMetaData
                 column("TABLE_SCHEM").
                 column("TABLE_NAME").
                 column("COLUMN_NAME").
-                column("DATA_TYPE", "Integer", Types.INTEGER).
+                column("DATA_TYPE", Types.INTEGER).
                 column("TYPE_NAME").
-                column("COLUMN_SIZE", "Integer", Types.INTEGER).
+                column("COLUMN_SIZE", Types.INTEGER).
                 column("BUFFER_LENGTH").
-                column("DECIMAL_DIGITS", "Integer", Types.INTEGER).
+                column("DECIMAL_DIGITS", Types.INTEGER).
                 column("NUM_PREC_RADIX").
                 column("NULLABLE").
                 column("REMARKS").
@@ -880,7 +878,7 @@ public class Neo4jDatabaseMetaData
                 column("TABLE_SCHEM").
                 column("TABLE_NAME").
                 column("COLUMN_NAME").
-                column("KEY_SEQ", Short.class.getSimpleName(), Types.SMALLINT).
+                column("KEY_SEQ", Types.SMALLINT).
                 column("PK_NAME").
                 newResultSet(connection);
     }

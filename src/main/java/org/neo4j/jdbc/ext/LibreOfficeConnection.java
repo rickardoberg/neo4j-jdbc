@@ -24,6 +24,7 @@ import org.neo4j.jdbc.Neo4jConnection;
 import org.neo4j.jdbc.ResultSetBuilder;
 import org.restlet.Client;
 
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -37,6 +38,7 @@ import java.util.regex.Pattern;
  */
 public class LibreOfficeConnection
     extends Neo4jConnection
+    implements Connection
 {
     public LibreOfficeConnection(String url, Client client, Properties properties) throws SQLException
     {

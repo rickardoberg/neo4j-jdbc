@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.logging.Logger;
 
 /**
  * TODO
@@ -41,7 +42,7 @@ public class CallProxy
 
     private static void log(final String str)
     {
-        System.out.println(str);
+        Logger.getLogger(Driver.class.getName()).info(str);
     }
 
     private Object next;

@@ -20,15 +20,12 @@
 
 package org.neo4j.jdbc;
 
-import org.codehaus.jackson.map.jsontype.impl.TypeNameIdResolver;
-
 import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -175,18 +172,7 @@ public class ListResultSet
     @Override
     public String getString(String s) throws SQLException
     {
-        return getString(getColumnIndex(s));
-    }
-
-    private int getColumnIndex(String s) throws SQLException
-    {
-        for (int i = 0; i < columns.size(); i++)
-        {
-            ColumnMetaData columnMetaData = columns.get(i);
-            if (columnMetaData.getName().equals(s))
-                return i+1;
-        }
-        throw new SQLException("No such column:"+s);
+        return getString(findColumn(s));
     }
 
     @Override
@@ -305,19 +291,25 @@ public class ListResultSet
     @Override
     public Object getObject(int i) throws SQLException
     {
-        return null;
+        return data.get(current).get(i-1);
     }
 
     @Override
     public Object getObject(String s) throws SQLException
     {
-        return null;
+        return getObject(findColumn(s));
     }
 
     @Override
     public int findColumn(String s) throws SQLException
     {
-        return 0;
+        for (int i = 0; i < columns.size(); i++)
+        {
+            ColumnMetaData columnMetaData = columns.get(i);
+            if (columnMetaData.getName().equals(s))
+                return i+1;
+        }
+        throw new SQLException("No such column:"+s);
     }
 
     @Override
@@ -1191,7 +1183,7 @@ public class ListResultSet
         @Override
         public String getSchemaName(int i) throws SQLException
         {
-            return null;
+            return "Default";
         }
 
         @Override
@@ -1215,19 +1207,19 @@ public class ListResultSet
         @Override
         public String getCatalogName(int i) throws SQLException
         {
-            return null;
+            return "Default";
         }
 
         @Override
         public int getColumnType(int i) throws SQLException
         {
-            return Types.VARCHAR;
+            return columns.get(i-1).getDataType();
         }
 
         @Override
         public String getColumnTypeName(int i) throws SQLException
         {
-            return String.class.getName();
+            return columns.get(i-1).getTypeName();
         }
 
         @Override
@@ -1251,7 +1243,7 @@ public class ListResultSet
         @Override
         public String getColumnClassName(int i) throws SQLException
         {
-            return null;
+            return columns.get(i-1).getTypeName();
         }
 
         @Override

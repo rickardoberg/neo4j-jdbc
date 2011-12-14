@@ -21,6 +21,7 @@
 package org.neo4j.jdbc;
 
 import org.neo4j.jdbc.ext.DbVisualizerConnection;
+import org.neo4j.jdbc.ext.IntelliJConnection;
 import org.neo4j.jdbc.ext.LibreOfficeConnection;
 import org.restlet.Client;
 import org.restlet.Context;
@@ -41,17 +42,15 @@ import java.util.Properties;
 public class Driver
     implements java.sql.Driver
 {
-
-    private Client client;
-
     public Driver()
     {
-        client = new Client("HTTP");
     }
 
     public Connection connect(String s, Properties properties) throws SQLException
     {
         parseUrlProperties(s, properties);
+
+        Client client = new Client("HTTP");
 
         // Check for specific tools that needs workarounds
         Neo4jConnection conn;
@@ -59,6 +58,8 @@ public class Driver
             conn = new LibreOfficeConnection(s, client, properties);
         else if (System.getProperties().containsKey("dbvis.ScriptsTreeShowDetails"))
             conn = new DbVisualizerConnection(s, client, properties);
+        else if (System.getProperty("user.dir").contains("IntelliJ"))
+            conn = new IntelliJConnection(s, client, properties);
         else
             conn = new Neo4jConnection(s, client, properties);
 

@@ -21,22 +21,26 @@
 package org.neo4j.jdbc.ext;
 
 import org.neo4j.jdbc.Neo4jConnection;
+import org.neo4j.jdbc.ResultSetBuilder;
 import org.restlet.Client;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
- * DbVisualizer specific Neo4j connection. Contains workarounds to get it to work with DbVisualizer.
+ * IntelliJ specific Neo4j connection. Contains workarounds to get it to work with IntelliJ.
  */
-public class DbVisualizerConnection
+public class IntelliJConnection
     extends Neo4jConnection
     implements Connection
 {
-    public DbVisualizerConnection(String url, Client client, Properties properties) throws SQLException
+    public IntelliJConnection(String url, Client client, Properties properties) throws SQLException
     {
         super(url, client, properties);
     }
@@ -45,13 +49,16 @@ public class DbVisualizerConnection
     public ResultSet executeQuery(String query, Map<String, Object> parameters) throws SQLException
     {
         {
-            if (query.contains("$columns$"))
+            Pattern pattern = Pattern.compile("select \"Default\".\"Default\".\"(\\w*)\".\\* from \"Default\".\"Default\".\"(\\w*)\"");
+            Matcher matcher = pattern.matcher(query);
+            if (matcher.matches())
             {
-                int idx = query.indexOf("\"");
-                int idx2 = query.indexOf("\"", idx+1);
-                final String type = query.substring(idx+1, idx2);
+//                query = "start n=node(0) match (n)-[:TYPE]->(type)<-[:IS_A]-(instance) where type.type={type} return instance.Firstname";
+                String table = matcher.group(1);
 
-                query = query.replace("$columns$", super.tableColumns(type, "instance."));
+                query = "start n=node(0) match (n)-[:TYPE]->(type)<-[:IS_A]-(instance) where type.type='"+table+"' return "+tableColumns(table, "instance.");
+                parameters = new HashMap<String, Object>();
+//                parameters.put("type", matcher.group(1));
             }
         }
 

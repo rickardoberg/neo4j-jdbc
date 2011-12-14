@@ -425,7 +425,7 @@ public class Neo4jConnection
                 }
                 data.add(rowData);
             }
-            return toResultSet(new ExecutionResult(columns, data));
+            return debug(toResultSet(new ExecutionResult(columns, data)));
         } catch (ResourceException e)
         {
             throw new SQLException(e.getStatus().getReasonPhrase());
