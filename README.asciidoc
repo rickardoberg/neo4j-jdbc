@@ -36,7 +36,8 @@ of those environments, and if so starts a "quirks mode", whereby those standard 
 
 One of the first tests I did with the driver was to connect to Neo4j using the DbVisualizer tool (www.dbvis.com/).
 Here is how you can try it out:
-* Download and install DbVIsualizer
+
+* Download and install DbVisualizer
 * Add the JDBC driver jar as a Neo4j driver in the Driver Manager.
 * Add a connection to your database
 * Under "Connection properties", change "SQL Statements" as follows:
@@ -49,6 +50,7 @@ Use the "SQL Commander" to issue arbitrary Cypher queries to the Neo4j server.
 === Using with LibreOffice ===
 
 To use the driver with LibreOffice (should be similar with OpenOffice, not tested though), follow these steps:
+
 * Add the driver jar to the classpath in the Java settings in LibreOffice
 * Create a new Database and select JDBC.
 * Enter the JDBC URL and set +org.neo4j.jdbc.Driver+ as driver
@@ -60,6 +62,7 @@ Now you can browse the "tables" and the data, as well as create Queries that per
 === Using with IntelliJ ===
 
 To use the driver with IntelliJ 11, do as follows:
+
 * Open up the Data Sources tab
 * Click +, select the JDBC driver jar, and enter the JDBC settings for the connection
 * Switch to the SQL Console, select Properties and go to the Text Mode tab. As "Parameter pattern", enter +(\{[\w]*\})+. This will allow you to replace Cypher
@@ -70,6 +73,7 @@ Now you can browse "tables" and execute Cypher queries from within IntelliJ.
 === Using with ODBC on Windows ===
 
 To use the driver as an ODBC data source in Windows, do as follows:
+
 * Download and install "ODBC-JDBC Gateway" from Easysoft: +http://www.easysoft.com/products/data_access/odbc_jdbc_gateway/+
 * Set up an ODBC data source by following the guide provided with the above software
 
