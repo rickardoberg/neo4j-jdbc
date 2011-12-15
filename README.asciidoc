@@ -25,6 +25,13 @@ and provide a means to execute queries against the Neo4j server.
 * Connect with URLs on the form +jdbc:neo4j://<host>:<port>/+, e.g. +jdbc:neo4j://localhost:7474/+
 * Execute queries using the Cypher graph query language
 
+To debug the driver, add ?debug=true to the URL. This will log all calls to the driver to the Java Util Logging framework.
+
+=== Quirks modes ===
+
+Many of the tools below issue SQL statements in order to browse tables. For these tools to work the driver detects whether it is running in any
+of those environments, and if so starts a "quirks mode", whereby those standard SQL statements are replaced on the fly with the Cypher equivalents.
+
 === Using with DbVisualizer ===
 
 One of the first tests I did with the driver was to connect to Neo4j using the DbVisualizer tool (www.dbvis.com/).
@@ -37,4 +44,33 @@ Here is how you can try it out:
 ** +SELECT COUNT: start n=node(0) match (n)-[:TYPE]->(type)<-[:IS_A]-(instance) return count(instance)+
 
 Now you should be able to browse the type nodes as tables and the nodes of those types as rows.
-Use the "SQL Commander" to issue arbitrary Cypher queries to the Neo4j server
+Use the "SQL Commander" to issue arbitrary Cypher queries to the Neo4j server.
+
+=== Using with LibreOffice ===
+
+To use the driver with LibreOffice (should be similar with OpenOffice, not tested though), follow these steps:
+* Add the driver jar to the classpath in the Java settings in LibreOffice
+* Create a new Database and select JDBC.
+* Enter the JDBC URL and set +org.neo4j.jdbc.Driver+ as driver
+* Optionally enter authentication settings
+* Click Finish
+
+Now you can browse the "tables" and the data, as well as create Queries that perform Cypher queries, and view the results.
+
+=== Using with IntelliJ ===
+
+To use the driver with IntelliJ 11, do as follows:
+* Open up the Data Sources tab
+* Click +, select the JDBC driver jar, and enter the JDBC settings for the connection
+* Switch to the SQL Console, select Properties and go to the Text Mode tab. As "Parameter pattern", enter +(\{[\w]*\})+. This will allow you to replace Cypher
+parameters with values before executing a query
+
+Now you can browse "tables" and execute Cypher queries from within IntelliJ.
+
+=== Using with ODBC on Windows ===
+
+To use the driver as an ODBC data source in Windows, do as follows:
+* Download and install "ODBC-JDBC Gateway" from Easysoft: +http://www.easysoft.com/products/data_access/odbc_jdbc_gateway/+
+* Set up an ODBC data source by following the guide provided with the above software
+
+Now you can browse "tables" and execute Cypher queries from any ODBC-compliant tool.

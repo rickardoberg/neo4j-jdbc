@@ -411,7 +411,8 @@ public class Neo4jConnection
             List<String> columns = new ArrayList<String>();
             for (JsonNode column : node.get("columns"))
             {
-                columns.add(column.getTextValue());
+                String textValue = column.getTextValue();
+                columns.add(textValue);
             }
 
             List<Map<String,Object>> data = new ArrayList<Map<String, Object>>();
