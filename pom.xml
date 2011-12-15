@@ -91,6 +91,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.9</version>
                 <configuration>
                     <argLine>-Xmx300m</argLine>
                 </configuration>
@@ -102,6 +103,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
+                    <appendAssemblyId>false</appendAssemblyId>
 
                     <archive>
                         <manifest>
