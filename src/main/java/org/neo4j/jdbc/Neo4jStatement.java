@@ -57,6 +57,8 @@ public class Neo4jStatement
     @Override
     public void close() throws SQLException
     {
+        connection = null;
+        resultSet = null;
     }
 
     @Override
@@ -203,67 +205,67 @@ public class Neo4jStatement
     @Override
     public Connection getConnection() throws SQLException
     {
-        return null;
+        return connection;
     }
 
     @Override
     public boolean getMoreResults(int i) throws SQLException
     {
-        return false;
+        return getMoreResults();
     }
 
     @Override
     public ResultSet getGeneratedKeys() throws SQLException
     {
-        return null;
+        return new ResultSetBuilder().newResultSet(connection);
     }
 
     @Override
     public int executeUpdate(String s, int i) throws SQLException
     {
-        return 0;
+        return executeUpdate(s);
     }
 
     @Override
     public int executeUpdate(String s, int[] ints) throws SQLException
     {
-        return 0;
+        return executeUpdate(s);
     }
 
     @Override
     public int executeUpdate(String s, String[] strings) throws SQLException
     {
-        return 0;
+        return executeUpdate(s);
     }
 
     @Override
     public boolean execute(String s, int i) throws SQLException
     {
-        return false;
+        return execute(s);
     }
 
     @Override
     public boolean execute(String s, int[] ints) throws SQLException
     {
-        return false;
+        return execute(s);
     }
 
     @Override
     public boolean execute(String s, String[] strings) throws SQLException
     {
-        return false;
+        return execute(s);
     }
 
     @Override
     public int getResultSetHoldability() throws SQLException
     {
-        return 0;
+        return ResultSet.CLOSE_CURSORS_AT_COMMIT;
     }
 
     @Override
     public boolean isClosed() throws SQLException
     {
-        return false;
+        return connection == null;
     }
 
     @Override
@@ -280,7 +282,7 @@ public class Neo4jStatement
     @Override
     public <T> T unwrap(Class<T> tClass) throws SQLException
     {
-        return null;
+        return (T) this;
     }
 
     @Override
