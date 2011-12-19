@@ -52,6 +52,9 @@ Use the "SQL Commander" to issue arbitrary Cypher queries to the Neo4j server.
 
 === Using with LibreOffice ===
 
+image::neo4j-jdbc/raw/master/src/docs/images/libre-office.png[LibreOffice]
+
+
 To use the driver with LibreOffice (should be similar with OpenOffice, not tested though), follow these steps:
 
 * Add the driver jar to the classpath in the Java settings in LibreOffice
