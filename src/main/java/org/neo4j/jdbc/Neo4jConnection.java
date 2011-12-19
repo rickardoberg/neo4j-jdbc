@@ -84,8 +84,8 @@ public class Neo4jConnection
             databaseProductVersion = node.get("neo4j_version").getTextValue();
 
             // Version check
-            if (!databaseProductVersion.startsWith("1.6"))
-                throw new SQLException("Unsupposed Neo4j version:"+databaseProductVersion);
+            if (!databaseProductVersion.startsWith("1.4"))
+                throw new SQLException("Unsupported Neo4j version:"+databaseProductVersion);
 
             // Get Cypher extension
             cypherResource = new ClientResource(dataResource.getContext(), node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue());
