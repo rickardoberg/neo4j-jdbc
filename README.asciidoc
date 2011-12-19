@@ -35,6 +35,9 @@ of those environments, and if so starts a "quirks mode", whereby those standard 
 === Using with DbVisualizer ===
 
 One of the first tests I did with the driver was to connect to Neo4j using the DbVisualizer tool (www.dbvis.com/).
+
+image::neo4j-jdbc/raw/master/src/docs/images/dbvisualizer1.png[DBViz]
+
 Here is how you can try it out:
 
 * Download and install DbVisualizer
