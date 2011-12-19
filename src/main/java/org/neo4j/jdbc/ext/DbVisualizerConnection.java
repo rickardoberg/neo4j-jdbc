@@ -20,6 +20,7 @@
 
 package org.neo4j.jdbc.ext;
 
+import org.neo4j.jdbc.Driver;
 import org.neo4j.jdbc.Neo4jConnection;
 import org.restlet.Client;
 
@@ -36,9 +37,9 @@ public class DbVisualizerConnection
     extends Neo4jConnection
     implements Connection
 {
-    public DbVisualizerConnection(String url, Client client, Properties properties) throws SQLException
+    public DbVisualizerConnection(Driver driver, String url, Client client, Properties properties) throws SQLException
     {
-        super(url, client, properties);
+        super(driver, url, client, properties);
     }
 
     @Override

@@ -55,13 +55,13 @@ public class Driver
         // Check for specific tools that needs workarounds
         Neo4jConnection conn;
         if (System.getProperties().containsKey("org.openoffice.native"))
-            conn = new LibreOfficeConnection(s, client, properties);
+            conn = new LibreOfficeConnection(this, s, client, properties);
         else if (System.getProperties().containsKey("dbvis.ScriptsTreeShowDetails"))
-            conn = new DbVisualizerConnection(s, client, properties);
+            conn = new DbVisualizerConnection(this, s, client, properties);
         else if (System.getProperty("user.dir").contains("IntelliJ"))
-            conn = new IntelliJConnection(s, client, properties);
+            conn = new IntelliJConnection(this, s, client, properties);
         else
-            conn = new Neo4jConnection(s, client, properties);
+            conn = new Neo4jConnection(this, s, client, properties);
 
         return conn.debug(conn);
     }

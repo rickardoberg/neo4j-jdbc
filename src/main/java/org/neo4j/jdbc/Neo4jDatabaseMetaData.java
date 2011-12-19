@@ -100,7 +100,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getDatabaseProductVersion() throws SQLException
     {
-        return "1.6";
+        return connection.getDatabaseProductVersion();
     }
 
     @Override
@@ -112,19 +112,19 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getDriverVersion() throws SQLException
     {
-        return "1.0";
+        return connection.getDriver().getMajorVersion()+"."+connection.getDriver().getMinorVersion();
     }
 
     @Override
     public int getDriverMajorVersion()
     {
-        return 0;
+        return connection.getDriver().getMajorVersion();
     }
 
     @Override
     public int getDriverMinorVersion()
     {
-        return 0;
+        return connection.getDriver().getMinorVersion();
     }
 
     @Override

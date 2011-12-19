@@ -56,6 +56,8 @@ public class RestConnectionTest
     @Test
     public void testGetMetaData() throws SQLException
     {
-        Assert.assertThat(conn.getMetaData(), CoreMatchers.<DatabaseMetaData>notNullValue());
+        DatabaseMetaData metaData = conn.getMetaData();
+        Assert.assertThat(metaData, CoreMatchers.<DatabaseMetaData>notNullValue());
+        Assert.assertTrue(metaData.getDatabaseProductVersion().startsWith("1.6"));
     }
 }

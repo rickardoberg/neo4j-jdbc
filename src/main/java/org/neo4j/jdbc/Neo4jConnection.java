@@ -48,7 +48,7 @@ import static org.neo4j.jdbc.DriverQueries.QUERIES;
  * TODO
  */
 public class Neo4jConnection
-    implements Connection
+        implements Connection
 {
     private boolean closed = false;
     private String url;
@@ -56,16 +56,19 @@ public class Neo4jConnection
     private ClientResource cypherResource;
     private ObjectMapper mapper = new ObjectMapper();
     private boolean debug;
+    private Driver driver;
+    private String databaseProductVersion;
 
-    public Neo4jConnection(String url, Client client, Properties properties) throws SQLException
+    public Neo4jConnection(Driver driver, String url, Client client, Properties properties) throws SQLException
     {
+        this.driver = driver;
         this.url = url;
         this.properties = properties;
         this.debug = "true".equalsIgnoreCase(properties.getProperty("debug"));
 
         try
         {
-            url  = "http"+url.substring("jdbc:neo4j".length());
+            url = "http" + url.substring("jdbc:neo4j".length());
             Reference ref = new Reference(new Reference(url), "/");
             Context context = new Context();
             context.setClientDispatcher(client);
@@ -74,12 +77,18 @@ public class Neo4jConnection
 
             // Get service root
             JsonNode node = mapper.readTree(resource.get().getReader());
-            ClientResource dataResource = new ClientResource(resource.getContext(),node.get("data").getTextValue());
+            ClientResource dataResource = new ClientResource(resource.getContext(), node.get("data").getTextValue());
             dataResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
 
-            // Get Cypher extension
             node = mapper.readTree(dataResource.get().getReader());
-            cypherResource = new ClientResource(dataResource.getContext(),node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue());
+            databaseProductVersion = node.get("neo4j_version").getTextValue();
+
+            // Version check
+            if (!databaseProductVersion.startsWith("1.6"))
+                throw new SQLException("Unsupposed Neo4j version:"+databaseProductVersion);
+
+            // Get Cypher extension
+            cypherResource = new ClientResource(dataResource.getContext(), node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue());
             cypherResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
         } catch (IOException e)
         {
@@ -134,7 +143,7 @@ public class Neo4jConnection
     {
         try
         {
-            ((Client)cypherResource.getNext()).stop();
+            ((Client) cypherResource.getNext()).stop();
         } catch (Exception e)
         {
             e.printStackTrace();
@@ -375,7 +384,7 @@ public class Neo4jConnection
     public ResultSet executeQuery(Execute execute) throws SQLException
     {
         if (execute instanceof ExecuteWithParameters)
-            return executeQuery(execute.toString(), ((ExecuteWithParameters)execute).getParameters());
+            return executeQuery(execute.toString(), ((ExecuteWithParameters) execute).getParameters());
         else
             return executeQuery(execute.toString(), Collections.<String, Object>emptyMap());
     }
@@ -383,7 +392,7 @@ public class Neo4jConnection
     public ResultSet executeQuery(String query, Map<String, Object> parameters) throws SQLException
     {
         query = query.replace('\"', '\'');
-        query = query.replace('\n',' ');
+        query = query.replace('\n', ' ');
 
         ObjectNode queryNode = mapper.createObjectNode();
         queryNode.put("query", query);
@@ -394,11 +403,11 @@ public class Neo4jConnection
             if (value instanceof String)
                 params.put(stringObjectEntry.getKey(), value.toString());
             else if (value instanceof Integer)
-                params.put(stringObjectEntry.getKey(), (Integer)value);
+                params.put(stringObjectEntry.getKey(), (Integer) value);
             else if (value instanceof Long)
-                params.put(stringObjectEntry.getKey(), (Long)value);
+                params.put(stringObjectEntry.getKey(), (Long) value);
             else if (value instanceof Boolean)
-                params.put(stringObjectEntry.getKey(), (Boolean)value);
+                params.put(stringObjectEntry.getKey(), (Boolean) value);
         }
         queryNode.put("params", params);
 
@@ -415,7 +424,7 @@ public class Neo4jConnection
                 columns.add(textValue);
             }
 
-            List<Map<String,Object>> data = new ArrayList<Map<String, Object>>();
+            List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
             for (JsonNode row : node.get("data"))
             {
                 int idx = 0;
@@ -463,7 +472,7 @@ public class Neo4jConnection
             rs.column(column);
         }
 
-        for (Map<String,Object> row: result)
+        for (Map<String, Object> row : result)
         {
             rs.rowData(row.values());
         }
@@ -484,5 +493,15 @@ public class Neo4jConnection
     public Properties getProperties()
     {
         return properties;
+    }
+
+    public Driver getDriver()
+    {
+        return driver;
+    }
+
+    public String getDatabaseProductVersion()
+    {
+        return databaseProductVersion;
     }
 }

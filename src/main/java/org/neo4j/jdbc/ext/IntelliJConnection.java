@@ -20,6 +20,7 @@
 
 package org.neo4j.jdbc.ext;
 
+import org.neo4j.jdbc.Driver;
 import org.neo4j.jdbc.Neo4jConnection;
 import org.neo4j.jdbc.ResultSetBuilder;
 import org.restlet.Client;
@@ -40,9 +41,9 @@ public class IntelliJConnection
     extends Neo4jConnection
     implements Connection
 {
-    public IntelliJConnection(String url, Client client, Properties properties) throws SQLException
+    public IntelliJConnection(Driver driver, String url, Client client, Properties properties) throws SQLException
     {
-        super(url, client, properties);
+        super(driver, url, client, properties);
     }
 
     @Override
