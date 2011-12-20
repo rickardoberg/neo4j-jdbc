@@ -56,7 +56,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getUserName() throws SQLException
     {
-        return null;
+        return connection.getProperties().getProperty("user");
     }
 
     @Override
