@@ -35,6 +35,9 @@ of those environments, and if so starts a "quirks mode", whereby those standard 
 === Using with DbVisualizer ===
 
 One of the first tests I did with the driver was to connect to Neo4j using the DbVisualizer tool (www.dbvis.com/).
+
+image::neo4j-jdbc/raw/master/src/docs/images/dbvisualizer1.png[DBViz]
+
 Here is how you can try it out:
 
 * Download and install DbVisualizer
@@ -48,6 +51,9 @@ Now you should be able to browse the type nodes as tables and the nodes of those
 Use the "SQL Commander" to issue arbitrary Cypher queries to the Neo4j server.
 
 === Using with LibreOffice ===
+
+image::neo4j-jdbc/raw/master/src/docs/images/libre-office.png[LibreOffice]
+
 
 To use the driver with LibreOffice (should be similar with OpenOffice, not tested though), follow these steps:
 
