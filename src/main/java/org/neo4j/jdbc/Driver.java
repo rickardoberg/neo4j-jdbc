@@ -42,8 +42,11 @@ import java.util.Properties;
 public class Driver
     implements java.sql.Driver
 {
+    DriverQueries queries;
+    
     public Driver()
     {
+        queries = new DriverQueries();
     }
 
     public Connection connect(String s, Properties properties) throws SQLException
@@ -89,6 +92,11 @@ public class Driver
     public boolean jdbcCompliant()
     {
         return true;
+    }
+
+    public DriverQueries getQueries()
+    {
+        return queries;
     }
 
     private void parseUrlProperties(String s, Properties properties)

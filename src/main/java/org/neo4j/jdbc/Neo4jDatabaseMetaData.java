@@ -22,8 +22,6 @@ package org.neo4j.jdbc;
 
 import java.sql.*;
 
-import static org.neo4j.jdbc.DriverQueries.QUERIES;
-
 /**
  * TODO
  */
@@ -760,7 +758,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public ResultSet getTables(String s, String s1, String s2, String[] strings) throws SQLException
     {
-        ResultSet result = connection.executeQuery(QUERIES.getTables());
+        ResultSet result = connection.executeQuery(connection.getDriver().getQueries().getTables());
         ResultSetBuilder rs = new ResultSetBuilder();
         rs.column("TABLE_CAT").
                 column("TABLE_SCHEM").
@@ -830,7 +828,7 @@ public class Neo4jDatabaseMetaData
                 column("SOURCE_DATA_TYPE").
                 column("IS_AUTOINCREMENT");
 
-        ResultSet result = connection.executeQuery(QUERIES.getColumns(tableNamePattern));
+        ResultSet result = connection.executeQuery(connection.getDriver().getQueries().getColumns(tableNamePattern));
         while (result.next())
         {
             rs.row().
@@ -1054,13 +1052,14 @@ public class Neo4jDatabaseMetaData
     @Override
     public int getDatabaseMajorVersion() throws SQLException
     {
-        return 1;
+        return Integer.parseInt(getDatabaseProductVersion().substring(0, 1));
     }
 
     @Override
     public int getDatabaseMinorVersion() throws SQLException
     {
-        return 0;
+        String[] versionParts = getDatabaseProductVersion().split("\\.");
+        return Integer.parseInt(versionParts[1]);
     }
 
     @Override

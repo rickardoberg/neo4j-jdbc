@@ -20,6 +20,7 @@
 
 package org.neo4j.jdbc.ext;
 
+import org.neo4j.cypherdsl.ExecuteWithParameters;
 import org.neo4j.jdbc.Driver;
 import org.neo4j.jdbc.Neo4jConnection;
 import org.neo4j.jdbc.ResultSetBuilder;
@@ -54,12 +55,9 @@ public class IntelliJConnection
             Matcher matcher = pattern.matcher(query);
             if (matcher.matches())
             {
-//                query = "start n=node(0) match (n)-[:TYPE]->(type)<-[:IS_A]-(instance) where type.type={type} return instance.Firstname";
                 String table = matcher.group(1);
-
-                query = "start n=node(0) match (n)-[:TYPE]->(type)<-[:IS_A]-(instance) where type.type='"+table+"' return "+tableColumns(table, "instance.");
-                parameters = new HashMap<String, Object>();
-//                parameters.put("type", matcher.group(1));
+                ExecuteWithParameters ewp = getDriver().getQueries().getData(table, returnProperties(table, "instance"));
+                return executeQuery(ewp);
             }
         }
 

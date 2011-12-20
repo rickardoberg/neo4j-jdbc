@@ -22,9 +22,6 @@ package org.neo4j.jdbc;
 
 import java.sql.*;
 import java.util.Collections;
-import java.util.Map;
-
-import static org.neo4j.jdbc.DriverQueries.QUERIES;
 
 /**
  * TODO

@@ -25,24 +25,21 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
+import org.neo4j.cypherdsl.query.ReturnExpression;
 import org.restlet.Client;
 import org.restlet.Context;
 import org.restlet.data.MediaType;
 import org.restlet.data.Preference;
 import org.restlet.data.Reference;
+import org.restlet.data.Status;
 import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.ClientResource;
 import org.restlet.resource.ResourceException;
 
 import java.io.IOException;
-import java.net.URL;
 import java.sql.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static org.neo4j.jdbc.DriverQueries.QUERIES;
 
 /**
  * TODO
@@ -84,11 +81,29 @@ public class Neo4jConnection
             databaseProductVersion = node.get("neo4j_version").getTextValue();
 
             // Version check
-            if (!databaseProductVersion.startsWith("1.4"))
+            if (getMetaData().getDatabaseMajorVersion() != 1 || getMetaData().getDatabaseMinorVersion() < 5)
                 throw new SQLException("Unsupported Neo4j version:"+databaseProductVersion);
 
             // Get Cypher extension
-            cypherResource = new ClientResource(dataResource.getContext(), node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue());
+            cypherResource = new ClientResource(dataResource.getContext(), node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue())
+            {
+                @Override
+                public void doError(Status errorStatus)
+                {
+                    try
+                    {
+                        JsonNode node = mapper.readTree(this.getResponse().getEntity().getReader());
+                        JsonNode message = node.get("message");
+                        if (message != null)
+                            super.doError(new Status(errorStatus.getCode(), message.toString(), message.toString(), errorStatus.getUri()));
+                    } catch (IOException e)
+                    {
+                        // Ignore
+                    }
+
+                    super.doError(errorStatus);
+                }
+            };
             cypherResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
         } catch (IOException e)
         {
@@ -447,7 +462,7 @@ public class Neo4jConnection
 
     public String tableColumns(String tableName, String columnPrefix) throws SQLException
     {
-        ResultSet columns = executeQuery(QUERIES.getColumns(tableName));
+        ResultSet columns = executeQuery(driver.getQueries().getColumns(tableName));
         StringBuilder columnsBuilder = new StringBuilder();
         while (columns.next())
         {
@@ -458,6 +473,16 @@ public class Neo4jConnection
         return columnsBuilder.toString();
     }
 
+    public Iterable<ReturnExpression> returnProperties(String tableName, String columnPrefix) throws SQLException
+    {
+        ResultSet columns = executeQuery(driver.getQueries().getColumns(tableName));
+        List<ReturnExpression> properties = new ArrayList<ReturnExpression>();
+        while (columns.next())
+        {
+            properties.add(ReturnExpression.properties(columnPrefix+"."+columns.getString("property.name")));
+        }
+        return properties;
+    }
 
     String getURL()
     {
