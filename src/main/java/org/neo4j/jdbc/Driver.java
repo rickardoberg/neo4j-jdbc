@@ -76,7 +76,12 @@ public class Driver
 
     public DriverPropertyInfo[] getPropertyInfo(String s, Properties properties) throws SQLException
     {
-        return new DriverPropertyInfo[0];
+        return new DriverPropertyInfo[]
+                {
+                        new DriverPropertyInfo("debug", properties.getProperty("debug")),
+                        new DriverPropertyInfo("user", properties.getProperty("user")),
+                        new DriverPropertyInfo("password", properties.getProperty("password"))
+                };
     }
 
     public int getMajorVersion()
@@ -91,7 +96,7 @@ public class Driver
 
     public boolean jdbcCompliant()
     {
-        return true;
+        return false;
     }
 
     public DriverQueries getQueries()

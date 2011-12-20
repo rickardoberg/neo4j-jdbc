@@ -31,6 +31,7 @@ public class Neo4jStatement
 {
     protected Neo4jConnection connection;
     protected ResultSet resultSet;
+    protected SQLWarning sqlWarning;
 
     public Neo4jStatement(Neo4jConnection connection)
     {
@@ -56,6 +57,7 @@ public class Neo4jStatement
     {
         connection = null;
         resultSet = null;
+        sqlWarning = null;
     }
 
     @Override
@@ -104,12 +106,13 @@ public class Neo4jStatement
     @Override
     public SQLWarning getWarnings() throws SQLException
     {
-        return null;
+        return sqlWarning;
     }
 
     @Override
     public void clearWarnings() throws SQLException
     {
+        sqlWarning = null;
     }
 
     @Override
@@ -122,9 +125,19 @@ public class Neo4jStatement
     {
         try
         {
-            resultSet = connection.executeQuery(s, Collections.<String, Object>emptyMap());
+            resultSet = connection.executeQuery(connection.nativeSQL(s), Collections.<String, Object>emptyMap());
             return true;
-        } catch (Throwable e)
+        } catch (SQLWarning e)
+        {
+            if (sqlWarning == null)
+                sqlWarning = e;
+            else
+                sqlWarning.setNextWarning(e);
+            throw e;
+        }catch (SQLException e)
+        {
+            throw e;
+        }catch (Throwable e)
         {
             throw new SQLException(e);
         }
