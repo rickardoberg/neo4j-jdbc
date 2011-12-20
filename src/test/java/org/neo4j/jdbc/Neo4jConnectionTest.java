@@ -20,31 +20,25 @@
 
 package org.neo4j.jdbc;
 
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.hamcrest.CoreMatchers;
+import org.junit.*;
 
-import java.security.PrivateKey;
 import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
+import java.sql.DatabaseMetaData;
 import java.sql.SQLException;
 import java.util.Properties;
 
 /**
  * TODO
  */
-public class RestMetaDataTest
+public class Neo4jConnectionTest
 {
     private static Connection conn;
 
     @BeforeClass
     public static void before() throws SQLException
     {
-        DriverManager.registerDriver(new Driver());
-
-        conn = DriverManager.getConnection("jdbc:neo4j://localhost:7474/?debug=true", new Properties());
+        conn = new Driver().connect("jdbc:neo4j://localhost:7474/", new Properties());
     }
 
     @AfterClass
@@ -60,18 +54,10 @@ public class RestMetaDataTest
     }
 
     @Test
-    public void testGetTables() throws SQLException
+    public void testGetMetaData() throws SQLException
     {
-        ResultSet rs = conn.getMetaData().getTables(null, null, "%", null);
-
-        System.out.println(rs);
-    }
-
-    @Test
-    public void testGetColumns() throws SQLException
-    {
-        ResultSet rs = conn.getMetaData().getColumns(null, null, "%", null);
-
-        System.out.println(rs);
+        DatabaseMetaData metaData = conn.getMetaData();
+        Assert.assertThat(metaData, CoreMatchers.<DatabaseMetaData>notNullValue());
+        Assert.assertTrue(metaData.getDatabaseProductVersion().startsWith("1.6"));
     }
 }
