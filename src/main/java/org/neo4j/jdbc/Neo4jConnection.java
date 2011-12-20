@@ -458,15 +458,7 @@ public class Neo4jConnection
             return debug(toResultSet(new ExecutionResult(columns, data)));
         } catch (ResourceException e)
         {
-            if (e.getStatus().getCode() == Status.CLIENT_ERROR_BAD_REQUEST.getCode())
-            {
-
-                SQLWarning sqlWarning = new SQLWarning(e.getStatus().getReasonPhrase());
-                sqlWarning.setNextWarning(sqlWarning);
-                this.sqlWarnings = sqlWarning;
-                throw sqlWarnings;
-            } else
-                throw new SQLException(e.getStatus().getReasonPhrase());
+            throw new SQLException(e.getStatus().getReasonPhrase());
         } catch (Throwable e)
         {
             throw new SQLException(e);

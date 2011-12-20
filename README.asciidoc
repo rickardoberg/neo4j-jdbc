@@ -27,6 +27,11 @@ and provide a means to execute queries against the Neo4j server.
 
 To debug the driver, add ?debug=true to the URL. This will log all calls to the driver to the Java Util Logging framework.
 
+== Authentication ==
+
+The driver supports authentication. You can provide the JDBC connection properties "user" and "password", and these will then be used to
+perform BASIC AUTH authentication while performing the REST API calls.
+
 === Quirks modes ===
 
 Many of the tools below issue SQL statements in order to browse tables. For these tools to work the driver detects whether it is running in any

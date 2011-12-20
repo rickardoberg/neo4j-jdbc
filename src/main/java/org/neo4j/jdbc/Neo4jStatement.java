@@ -134,7 +134,7 @@ public class Neo4jStatement
             else
                 sqlWarning.setNextWarning(e);
             throw e;
-        }catch (SQLException e)
+        } catch (SQLException e)
         {
             throw e;
         }catch (Throwable e)
