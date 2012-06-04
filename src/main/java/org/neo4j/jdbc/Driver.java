@@ -46,14 +46,15 @@ public class Driver
 {
     static
     {
-    	try 
-    	{
-			DriverManager.registerDriver(new Driver());
-		} catch (SQLException e) {
-			System.err.println(e.getLocalizedMessage());
-		}
-    	
-    }   
+        try
+        {
+            DriverManager.registerDriver(new Driver());
+        } catch (SQLException e)
+        {
+            System.err.println(e.getLocalizedMessage());
+        }
+
+    } 
 	
 	DriverQueries queries;
     

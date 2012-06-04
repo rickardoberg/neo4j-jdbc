@@ -63,25 +63,27 @@ public class DriverTest
     @Test
     public void testDriverRegistration()
     {
-    	try {
-			java.sql.Driver driver=DriverManager.getDriver("jdbc:neo4j://localhost:7474/");
-			Assert.assertNotNull(driver);
-			Assert.assertEquals(this.driver.getClass(), driver.getClass());
-		} catch (SQLException e) {
-			Assert.fail(e.getLocalizedMessage());
-		}
-    	
-    	
+        try
+        {
+            java.sql.Driver driver = DriverManager.getDriver("jdbc:neo4j://localhost:7474/");
+            Assert.assertNotNull(driver);
+            Assert.assertEquals(this.driver.getClass(), driver.getClass());
+        } catch (SQLException e)
+        {
+            Assert.fail(e.getLocalizedMessage());
+        }
+
     }
-    
+
     @Test
     public void testDriverService()
     {
-    	ServiceLoader<java.sql.Driver> serviceLoader=ServiceLoader.load(java.sql.Driver.class);
-    	for (java.sql.Driver driver : serviceLoader) {
-			if(Driver.class.isInstance(driver))
-				return;
-		}
-    	Assert.fail(Driver.class.getName()+" not registered as a Service");
+        ServiceLoader<java.sql.Driver> serviceLoader = ServiceLoader.load(java.sql.Driver.class);
+        for (java.sql.Driver driver : serviceLoader)
+        {
+            if (Driver.class.isInstance(driver))
+                return;
+        }
+        Assert.fail(Driver.class.getName() + " not registered as a Service");
     }
 }
