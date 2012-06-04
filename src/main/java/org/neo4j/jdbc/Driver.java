@@ -20,6 +20,7 @@
 
 package org.neo4j.jdbc;
 
+
 import org.neo4j.jdbc.ext.DbVisualizerConnection;
 import org.neo4j.jdbc.ext.IntelliJConnection;
 import org.neo4j.jdbc.ext.LibreOfficeConnection;
@@ -31,6 +32,7 @@ import org.restlet.data.Reference;
 import org.restlet.resource.ClientResource;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -42,7 +44,19 @@ import java.util.Properties;
 public class Driver
     implements java.sql.Driver
 {
-    DriverQueries queries;
+    static
+    {
+        try
+        {
+            DriverManager.registerDriver(new Driver());
+        } catch (SQLException e)
+        {
+            System.err.println(e.getLocalizedMessage());
+        }
+
+    } 
+	
+	DriverQueries queries;
     
     public Driver()
     {
