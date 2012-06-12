@@ -20,6 +20,7 @@
 
 package org.neo4j.jdbc;
 
+
 import org.neo4j.jdbc.ext.DbVisualizerConnection;
 import org.neo4j.jdbc.ext.IntelliJConnection;
 import org.neo4j.jdbc.ext.LibreOfficeConnection;

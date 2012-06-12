@@ -20,6 +20,7 @@
 
 package org.neo4j.jdbc;
 
+
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +29,7 @@ import org.junit.Test;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 /**
  * TODO
@@ -56,10 +58,31 @@ public class DriverTest
 
         Assert.assertThat(conn.getProperties().getProperty("debug"), CoreMatchers.equalTo("false"));
     }
+    
+    @Test
+    public void testDriverRegistration()
+    {
+        try
+        {
+            java.sql.Driver driver = DriverManager.getDriver("jdbc:neo4j://localhost:7474/");
+            Assert.assertNotNull(driver);
+            Assert.assertEquals(this.driver.getClass(), driver.getClass());
+        } catch (SQLException e)
+        {
+            Assert.fail(e.getLocalizedMessage());
+        }
+
+    }
 
     @Test
-    public void testDriverRegistration() throws SQLException
+    public void testDriverService()
     {
-        Assert.assertThat(DriverManager.getDriver("jdbc:neo4j://localhost:7474/db/data").getClass().getName(), CoreMatchers.equalTo(Driver.class.getName()));
+        ServiceLoader<java.sql.Driver> serviceLoader = ServiceLoader.load(java.sql.Driver.class);
+        for (java.sql.Driver driver : serviceLoader)
+        {
+            if (Driver.class.isInstance(driver))
+                return;
+        }
+        Assert.fail(Driver.class.getName() + " not registered as a Service");
     }
 }
