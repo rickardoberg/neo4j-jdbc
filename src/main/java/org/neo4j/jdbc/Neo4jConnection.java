@@ -23,8 +23,10 @@ package org.neo4j.jdbc;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
+import org.neo4j.cypherdsl.CypherQuery;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
+import org.neo4j.cypherdsl.query.Expression;
 import org.neo4j.cypherdsl.query.ReturnExpression;
 import org.restlet.Client;
 import org.restlet.Context;
@@ -39,7 +41,7 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * TODO
+ * Implementation of Connection that delegates to the Neo4j REST API and sends queries as Cypher requests
  */
 public class Neo4jConnection
         implements Connection
@@ -88,8 +90,14 @@ public class Neo4jConnection
             if (getMetaData().getDatabaseMajorVersion() != 1 || getMetaData().getDatabaseMinorVersion() < 5)
                 throw new SQLException("Unsupported Neo4j version:"+databaseProductVersion);
 
-            // Get Cypher extension
-            cypherResource = new ClientResource(dataResource.getContext(), node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue())
+            // Get Cypher endpoint
+            String cypherPath;
+            if (node.get("extensions").get("CypherPlugin") != null)
+                cypherPath = node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue();
+            else
+                cypherPath = node.get("cypher").getTextValue();
+
+            cypherResource = new ClientResource(dataResource.getContext(), cypherPath)
             {
                 @Override
                 public void doError(Status errorStatus)
@@ -434,7 +442,9 @@ public class Neo4jConnection
         Representation req = new StringRepresentation(queryNode.toString(), MediaType.APPLICATION_JSON);
         try
         {
-            Representation rep = cypherResource.post(req);
+            Representation rep = new ClientResource(cypherResource).post(req);
+
+            // TODO Implement support for streaming Cypher here
             JsonNode node = mapper.readTree(rep.getReader());
 
             List<String> columns = new ArrayList<String>();
@@ -451,7 +461,7 @@ public class Neo4jConnection
                 Map<String, Object> rowData = new LinkedHashMap<String, Object>();
                 for (JsonNode cell : row)
                 {
-                    rowData.put(columns.get(idx++), cell.asText());
+                    rowData.put(columns.get(idx++), toObject(cell));
                 }
                 data.add(rowData);
             }
@@ -463,6 +473,78 @@ public class Neo4jConnection
         {
             throw new SQLException(e);
         }
+    }
+
+    private Object toObject(JsonNode cell) {
+        if (cell.isObject()) {
+            if (cell.has("length") && cell.has("nodes") && cell.has("relationships")) {
+                return toPath(cell);
+            }
+            Map<String, Object> result = toPropertyContainer(cell);
+            return addRelationshipInfo(cell, result);
+        }
+        if (cell.isArray()) {
+            ArrayList<Object> result = new ArrayList<Object>(cell.size());
+            for (JsonNode node : cell) {
+                result.add(toObject(node));
+            }
+            return result;
+        }
+        if (cell.isTextual()) return cell.asText();
+        if (cell.isBoolean()) return cell.asBoolean();
+        if (cell.isNumber()) return cell.getNumberValue();
+        return cell.asText();
+    }
+
+    private Object addRelationshipInfo(JsonNode cell, Map<String, Object> result) {
+        if (cell.has("start")) result.put("_start",idOf(cell.get("start")));
+        if (cell.has("end")) result.put("_end",idOf(cell.get("end")));
+        if (cell.has("type")) result.put("_type",cell.get("type").asText());
+        return result;
+    }
+
+    private Map<String, Object> toPropertyContainer(JsonNode cell) {
+        Map<String,Object> result=new TreeMap<String, Object>();
+        String idField= cell.has("type") ? "_rel_id" : "_node_id";
+        result.put(idField,idOf(cell.get("self")));
+        JsonNode data = cell.get("data");
+        if (data!=null && data.isObject() && data.size()>0) {
+            Iterator<String> fieldNames = data.getFieldNames();
+            while (fieldNames.hasNext()) {
+                String fieldName = fieldNames.next();
+                result.put(fieldName,toObject(data.get(fieldName)));
+            }
+        }
+        return result;
+    }
+
+    private ArrayList<Object> toPath(JsonNode cell) {
+        ArrayList<Object> path = new ArrayList<Object>(cell.get("length").asInt() + 1);
+        Iterator<JsonNode> nodes = cell.get("nodes").iterator();
+        Iterator<JsonNode> relationships = cell.get("relationships").iterator();
+        while (nodes.hasNext()) {
+            path.add(map("_node_id", idOf(nodes.next())));
+            if (relationships.hasNext()) {
+                path.add(map("_rel_id", idOf(relationships.next())));
+            }
+        }
+        return path;
+    }
+
+    private Map<String, Object> map(String key, Object value) {
+        TreeMap<String, Object> result = new TreeMap<String, Object>();
+        result.put(key,value);
+        return result;
+    }
+
+    private Long idOf(JsonNode node) {
+        if (node==null) {
+            return null;
+        }
+        String uri = node.asText();
+        if (uri==null) return null;
+        int idx = uri.lastIndexOf("/");
+        return idx==-1 ? null : Long.valueOf(uri.substring(idx + 1));
     }
 
     public String tableColumns(String tableName, String columnPrefix) throws SQLException
@@ -478,13 +560,13 @@ public class Neo4jConnection
         return columnsBuilder.toString();
     }
 
-    public Iterable<ReturnExpression> returnProperties(String tableName, String columnPrefix) throws SQLException
+    public Iterable<Expression> returnProperties(String tableName, String columnPrefix) throws SQLException
     {
         ResultSet columns = executeQuery(driver.getQueries().getColumns(tableName));
-        List<ReturnExpression> properties = new ArrayList<ReturnExpression>();
+        List<Expression> properties = new ArrayList<Expression>();
         while (columns.next())
         {
-            properties.add(ReturnExpression.properties(columnPrefix+"."+columns.getString("property.name")));
+            properties.add(CypherQuery.identifier(columnPrefix).property(columns.getString("property.name")));
         }
         return properties;
     }

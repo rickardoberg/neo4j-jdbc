@@ -26,22 +26,23 @@ import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * ResultSet implementation that is backed by Lists.
+ * ResultSet implementation that is backed by an Iterator.
  */
-public class ListResultSet
+public class IteratorResultSet
     implements ResultSet
 {
     private boolean closed = false;
-    private int current = -1;
     private List<Neo4jColumnMetaData> columns;
-    private List<List<Object>> data;
+    private Iterator<List<Object>> data;
+    private List<Object> currentRow;
     private Neo4jConnection conn;
 
-    public ListResultSet(List<Neo4jColumnMetaData> columns, List<List<Object>> data, Neo4jConnection conn)
+    public IteratorResultSet(List<Neo4jColumnMetaData> columns, Iterator<List<Object>> data, Neo4jConnection conn)
     {
         this.columns = columns;
         this.data = data;
@@ -51,9 +52,14 @@ public class ListResultSet
     @Override
     public boolean next() throws SQLException
     {
-        current++;
-
-        return data.size()>current;
+        if (data.hasNext())
+        {
+            currentRow = data.next();
+            return true;
+        } else
+        {
+            return false;
+        }
     }
 
     @Override
@@ -71,32 +77,32 @@ public class ListResultSet
     @Override
     public String getString(int i) throws SQLException
     {
-        Object value = data.get(current).get(i - 1);
+        Object value = currentRow.get(i - 1);
         return value == null ? null : value.toString();
     }
 
     @Override
     public boolean getBoolean(int i) throws SQLException
     {
-        return (Boolean) data.get(current).get(i-1);
+        return (Boolean) currentRow.get(i-1);
     }
 
     @Override
     public byte getByte(int i) throws SQLException
     {
-        return (Byte) data.get(current).get(i-1);
+        return (Byte) currentRow.get(i-1);
     }
 
     @Override
     public short getShort(int i) throws SQLException
     {
-        return (Short) data.get(current).get(i-1);
+        return (Short) currentRow.get(i-1);
     }
 
     @Override
     public int getInt(int i) throws SQLException
     {
-        Object value = data.get(current).get(i - 1);
+        Object value = currentRow.get(i - 1);
         if (value == null || !(value instanceof Integer))
             return 0;
         else
@@ -106,67 +112,67 @@ public class ListResultSet
     @Override
     public long getLong(int i) throws SQLException
     {
-        return (Long) data.get(current).get(i-1);
+        return (Long) currentRow.get(i-1);
     }
 
     @Override
     public float getFloat(int i) throws SQLException
     {
-        return (Float) data.get(current).get(i-1);
+        return (Float) currentRow.get(i-1);
     }
 
     @Override
     public double getDouble(int i) throws SQLException
     {
-        return (Double) data.get(current).get(i-1);
+        return (Double) currentRow.get(i-1);
     }
 
     @Override
     public BigDecimal getBigDecimal(int i, int i1) throws SQLException
     {
-        return (BigDecimal) data.get(current).get(i-1);
+        return (BigDecimal) currentRow.get(i-1);
     }
 
     @Override
     public byte[] getBytes(int i) throws SQLException
     {
-        return (byte[]) data.get(current).get(i-1);
+        return (byte[]) currentRow.get(i-1);
     }
 
     @Override
     public Date getDate(int i) throws SQLException
     {
-        return (Date) data.get(current).get(i-1);
+        return (Date) currentRow.get(i-1);
     }
 
     @Override
     public Time getTime(int i) throws SQLException
     {
-        return (Time) data.get(current).get(i-1);
+        return (Time) currentRow.get(i-1);
     }
 
     @Override
     public Timestamp getTimestamp(int i) throws SQLException
     {
-        return (Timestamp) data.get(current).get(i-1);
+        return (Timestamp) currentRow.get(i-1);
     }
 
     @Override
     public InputStream getAsciiStream(int i) throws SQLException
     {
-        return (InputStream) data.get(current).get(i-1);
+        return (InputStream) currentRow.get(i-1);
     }
 
     @Override
     public InputStream getUnicodeStream(int i) throws SQLException
     {
-        return (InputStream) data.get(current).get(i-1);
+        return (InputStream) currentRow.get(i-1);
     }
 
     @Override
     public InputStream getBinaryStream(int i) throws SQLException
     {
-        return (InputStream) data.get(current).get(i-1);
+        return (InputStream) currentRow.get(i-1);
     }
 
     @Override
@@ -291,7 +297,7 @@ public class ListResultSet
     @Override
     public Object getObject(int i) throws SQLException
     {
-        return data.get(current).get(i-1);
+        return currentRow.get(i-1);
     }
 
     @Override
@@ -391,35 +397,32 @@ public class ListResultSet
     @Override
     public boolean absolute(int i) throws SQLException
     {
-        if (i > 0)
-            current = i - 1;
-        else
-            current = data.size()-i;
-
-        return false;
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public boolean relative(int i) throws SQLException
     {
-        return false;
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public boolean previous() throws SQLException
     {
-        return false;
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public void setFetchDirection(int i) throws SQLException
     {
+        if (i != ResultSet.FETCH_FORWARD)
+            throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public int getFetchDirection() throws SQLException
     {
-        return 0;
+        return ResultSet.FETCH_FORWARD;
     }
 
     @Override
@@ -436,7 +439,7 @@ public class ListResultSet
     @Override
     public int getType() throws SQLException
     {
-        return 0;
+        return ResultSet.TYPE_FORWARD_ONLY;
     }
 
     @Override
@@ -1109,12 +1112,7 @@ public class ListResultSet
     @Override
     public String toString()
     {
-        String result = "Columns:"+columns;
-        for (List<Object> row : data)
-        {
-            result+="\n"+row;
-        }
-        return result;
+        return "Columns:"+columns;
     }
 
 }

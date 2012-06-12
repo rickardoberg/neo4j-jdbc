@@ -20,39 +20,39 @@
 
 package org.neo4j.jdbc;
 
-import java.util.Iterator;
-import java.util.Map;
-
 /**
- * Cypher execution result.
- */
-public class ExecutionResult implements Iterable<Map<String,Object>>
+* TODO
+*/
+public class Neo4jColumnMetaData
 {
-    private Iterable<String> columns;
-    private Iterable<Map<String,Object>> result;
+    private String name;
+    private String typeName;
+    private int dataType;
 
-    public ExecutionResult(Iterable<String> columns, Iterable<Map<String, Object>> result)
+    public Neo4jColumnMetaData(String name, String typeName, int dataType)
     {
-        this.columns = columns;
-        this.result = result;
+        this.name = name;
+        this.typeName = typeName;
+        this.dataType = dataType;
     }
 
-    public Iterable<String> columns()
+    public String getName()
     {
-        return columns;
+        return name;
     }
 
-    @Override
-    public Iterator<Map<String, Object>> iterator()
+    public String getTypeName()
     {
-        return result.iterator();
+        return typeName;
     }
 
-    @Override
+    public int getDataType()
+    {
+        return dataType;
+    }
+
     public String toString()
     {
-        String result = "Columns:"+columns;
-        result+="\n"+this.result;
-        return result;
+        return name+":"+ typeName;
     }
 }

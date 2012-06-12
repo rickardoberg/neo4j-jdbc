@@ -24,7 +24,7 @@ import java.sql.*;
 import java.util.Collections;
 
 /**
- * TODO
+ * Implementation of JDBC Statement.
  */
 public class Neo4jStatement
     implements Statement

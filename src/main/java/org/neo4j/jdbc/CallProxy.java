@@ -30,7 +30,7 @@ import java.lang.reflect.Proxy;
 import java.util.logging.Logger;
 
 /**
- * TODO
+ * This implements driver debugging functionality. Method calls and results are logged to JUL.
  */
 public class CallProxy
     implements InvocationHandler

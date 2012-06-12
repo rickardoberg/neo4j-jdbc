@@ -23,9 +23,9 @@ package org.neo4j.jdbc;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -55,5 +55,11 @@ public class DriverTest
         Neo4jConnection conn = (Neo4jConnection) driver.connect("jdbc:neo4j://localhost:7474/?debug=false", new Properties());
 
         Assert.assertThat(conn.getProperties().getProperty("debug"), CoreMatchers.equalTo("false"));
+    }
+
+    @Test
+    public void testDriverRegistration() throws SQLException
+    {
+        Assert.assertThat(DriverManager.getDriver("jdbc:neo4j://localhost:7474/db/data").getClass().getName(), CoreMatchers.equalTo(Driver.class.getName()));
     }
 }

@@ -23,19 +23,8 @@ package org.neo4j.jdbc;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
 import org.neo4j.cypherdsl.query.Expression;
-import org.neo4j.cypherdsl.query.ReturnExpression;
-import org.neo4j.cypherdsl.query.StartExpression;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import static org.neo4j.cypherdsl.CypherQuery.start;
-import static org.neo4j.cypherdsl.query.Expression.param;
-import static org.neo4j.cypherdsl.query.MatchExpression.path;
-import static org.neo4j.cypherdsl.query.ReturnExpression.properties;
-import static org.neo4j.cypherdsl.query.StartExpression.node;
-import static org.neo4j.cypherdsl.query.WhereExpression.not;
-import static org.neo4j.cypherdsl.query.WhereExpression.prop;
+import static org.neo4j.cypherdsl.CypherQuery.*;
 
 /**
  * This class contains all the Cypher queries that the driver needs to issue.
@@ -46,29 +35,29 @@ public class DriverQueries
     {
         return start(node("n", 0)).
                 match(path().from("n").out("TYPE").to("type")).
-                returns(properties("type.type"));
+                returns(identifier("type").property("type"));
     }
 
     public Execute getColumns()
     {
         return start(node("n", 0)).
                 match(path().from("n").out("TYPE").to("type").link().out("HAS_PROPERTY").to("property")).
-                returns(properties("type.type", "property.name", "property.type"));
+                returns(identifier("type").property("type"), identifier("property").property("name"), identifier("property").property("type"));
     }
 
     public ExecuteWithParameters getColumns(String typeName)
     {
         return start(node("n", 0)).
                 match(path().from("n").out("TYPE").to("type").link().out("HAS_PROPERTY").to("property")).
-                where(prop("type.type").eq(param("typename"))).
-                returns(properties("type.type", "property.name", "property.type")).parameter("typename", typeName);
+                where(identifier("type").string("type").eq(param("typename"))).
+                returns(identifier("type").string("type"), identifier("property").string("name"), identifier("property").string("type")).parameter("typename", typeName);
     }
     
-    public ExecuteWithParameters getData(String typeName, Iterable<ReturnExpression> returnProperties)
+    public ExecuteWithParameters getData(String typeName, Iterable<Expression> returnProperties)
     {
         return start(node("n",0)).
                 match(path().from("n").out("TYPE").to("type").link().in("IS_A").to("instance")).
-                where(prop("type.type").eq(param("typename"))).
+                where(identifier("type").string("type").eq(param("typename"))).
                 returns(returnProperties).
                 parameter("typename", typeName);
     }

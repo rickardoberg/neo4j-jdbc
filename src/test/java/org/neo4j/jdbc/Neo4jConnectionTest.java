@@ -58,6 +58,6 @@ public class Neo4jConnectionTest
     {
         DatabaseMetaData metaData = conn.getMetaData();
         Assert.assertThat(metaData, CoreMatchers.<DatabaseMetaData>notNullValue());
-        Assert.assertTrue(metaData.getDatabaseProductVersion().startsWith("1.6"));
+        Assert.assertTrue(metaData.getDatabaseProductVersion().startsWith("1."));
     }
 }

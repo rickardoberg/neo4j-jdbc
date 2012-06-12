@@ -27,13 +27,14 @@ import java.sql.Types;
 import java.util.*;
 
 /**
- * TODO
+ * Helper to build ResultSets using a fluent DSL approach.
  */
 public class ResultSetBuilder
 {
-    private List<ListResultSet.ColumnMetaData> columns = new ArrayList<ListResultSet.ColumnMetaData>();
+    private List<Neo4jColumnMetaData> columns = new ArrayList<Neo4jColumnMetaData>();
 
     private List<List<Object>> data = new ArrayList<List<Object>>();
+    private Iterable<List<Object>> streamingData;
 
     private List<Object> currentRow = new ArrayList<Object>();
 
@@ -45,7 +46,7 @@ public class ResultSetBuilder
         else if (type == Types.INTEGER)
             typeName = Integer.class.getName();
         
-        columns.add(new ListResultSet.ColumnMetaData(name, typeName, type));
+        columns.add(new Neo4jColumnMetaData(name, typeName, type));
         return this;
     }
 
@@ -71,6 +72,12 @@ public class ResultSetBuilder
         return rowData(Arrays.asList(values));
     }
 
+    public ResultSetBuilder data(Iterable<List<Object>> streamingData)
+    {
+        this.streamingData = streamingData;
+        return this;
+    }
+
     public ResultSetBuilder cell(String name, Object value)
     {
         int i = getColumnIndex(name);
@@ -82,14 +89,17 @@ public class ResultSetBuilder
 
     public ResultSet newResultSet(Connection connection) throws SQLException
     {
-        return new ListResultSet(columns, data, connection.unwrap(Neo4jConnection.class));
+        if (streamingData != null)
+            return new IteratorResultSet(columns, streamingData.iterator(), connection.unwrap(Neo4jConnection.class));
+        else
+            return new ListResultSet(columns, data, connection.unwrap(Neo4jConnection.class));
     }
 
     private int getColumnIndex(String name)
     {
         for (int i = 0; i < columns.size(); i++)
         {
-            ListResultSet.ColumnMetaData columnMetaData = columns.get(i);
+            Neo4jColumnMetaData columnMetaData = columns.get(i);
             if (columnMetaData.getName().equals(name))
                 return i;
         }
