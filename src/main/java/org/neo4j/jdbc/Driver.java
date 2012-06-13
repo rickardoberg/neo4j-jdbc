@@ -21,21 +21,12 @@
 package org.neo4j.jdbc;
 
 
-import org.neo4j.jdbc.ext.DbVisualizerConnection;
-import org.neo4j.jdbc.ext.IntelliJConnection;
-import org.neo4j.jdbc.ext.LibreOfficeConnection;
 import org.restlet.Client;
-import org.restlet.Context;
-import org.restlet.data.MediaType;
-import org.restlet.data.Preference;
-import org.restlet.data.Reference;
-import org.restlet.resource.ClientResource;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.util.Collections;
 import java.util.Properties;
 
 /**
@@ -44,6 +35,9 @@ import java.util.Properties;
 public class Driver
     implements java.sql.Driver
 {
+    private static final String CON_PREFIX = "jdbc:neo4j";
+    private final Client client = new Client("HTTP");
+
     static
     {
         try
@@ -56,45 +50,36 @@ public class Driver
     }
 
     DriverQueries queries;
-    
+
     public Driver()
     {
         queries = new DriverQueries();
     }
 
-    public Connection connect(String s, Properties properties) throws SQLException
+    public Neo4jConnection connect(String url, Properties properties) throws SQLException
     {
-        parseUrlProperties(s, properties);
+        parseUrlProperties(url, properties);
 
-        Client client = new Client("HTTP");
-
-        // Check for specific tools that needs workarounds
-        Neo4jConnection conn;
-        if (System.getProperties().containsKey("org.openoffice.native"))
-            conn = new LibreOfficeConnection(this, s, client, properties);
-        else if (System.getProperties().containsKey("dbvis.ScriptsTreeShowDetails"))
-            conn = new DbVisualizerConnection(this, s, client, properties);
-        else if (System.getProperty("user.dir").contains("IntelliJ"))
-            conn = new IntelliJConnection(this, s, client, properties);
-        else
-            conn = new Neo4jConnection(this, s, client, properties);
-
-        return conn.debug(conn);
+        return Connections.create(this, url, client, properties);
     }
 
     public boolean acceptsURL(String s) throws SQLException
     {
-        return s.startsWith("jdbc:neo4j");
+        return s.startsWith(CON_PREFIX);
     }
 
-    public DriverPropertyInfo[] getPropertyInfo(String s, Properties properties) throws SQLException
+    public DriverPropertyInfo[] getPropertyInfo(String s, Properties props) throws SQLException
     {
         return new DriverPropertyInfo[]
                 {
-                        new DriverPropertyInfo("debug", properties.getProperty("debug")),
-                        new DriverPropertyInfo("user", properties.getProperty("user")),
-                        new DriverPropertyInfo("password", properties.getProperty("password"))
+                        infoFor(props, "debug"),
+                        infoFor(props, "user"),
+                        infoFor(props, "password")
                 };
+    }
+
+    private DriverPropertyInfo infoFor(Properties properties, String name) {
+        return new DriverPropertyInfo(name, properties.getProperty(name));
     }
 
     public int getMajorVersion()

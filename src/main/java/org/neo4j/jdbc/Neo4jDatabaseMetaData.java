@@ -839,7 +839,7 @@ public class Neo4jDatabaseMetaData
                     cell("COLUMN_NAME", result.getString("property.name")).
                     cell("COLUMN_SIZE", 256).
                     cell("DECIMAL_DIGITS", 256).
-                    cell("DATA_TYPE", Types.VARCHAR).
+                    cell("DATA_TYPE", Types.VARCHAR). // TODO
                     cell("TYPE_NAME", "VARCHAR");
         }
         return connection.debug(rs.newResultSet(connection));

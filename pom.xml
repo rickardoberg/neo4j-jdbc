@@ -86,23 +86,58 @@
             <artifactId>junit</artifactId>
             <version>4.4</version>
         </dependency>
-        <dependency>
-            <groupId>org.neo4j.app</groupId>
-            <artifactId>neo4j-server</artifactId>
-            <version>1.8.M03</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.neo4j.app</groupId>
-            <artifactId>neo4j-server</artifactId>
-            <version>1.8.M03</version>
-            <type>test-jar</type>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
+	      <dependency>
+	      <groupId>org.neo4j.app</groupId>
+	      <artifactId>neo4j-server</artifactId>
+	      <version>${neo4j.version}</version>
+	      <exclusions>
+	          <exclusion>
+	              <groupId>org.neo4j</groupId>
+	              <artifactId>neo4j-shell</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>org.neo4j</groupId>
+	              <artifactId>neo4j</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>ch.qos.logback</groupId>
+	              <artifactId>logback-access</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>ch.qos.logback</groupId>
+	              <artifactId>logback-classic</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>janino</groupId>
+	              <artifactId>janino</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>com.tinkerpop.gremlin</groupId>
+	              <artifactId>gremlin-groovy</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>com.tinkerpop.blueprints</groupId>
+	              <artifactId>blueprints-neo4j-graph</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>com.sun.jersey.contribs</groupId>
+	              <artifactId>jersey-multipart</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>org.rrd4j</groupId>
+	              <artifactId>rrd4j</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>bouncycastle</groupId>
+	              <artifactId>bcprov-jdk16</artifactId>
+	          </exclusion>
+	      </exclusions>
+	      <scope>test</scope>
+	    </dependency>
+	    <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-kernel</artifactId>
-            <version>1.8.M03</version>
+            <version>${neo4j.version}</version>
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>

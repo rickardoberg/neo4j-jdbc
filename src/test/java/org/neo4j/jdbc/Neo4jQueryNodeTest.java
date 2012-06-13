@@ -20,59 +20,19 @@
 
 package org.neo4j.jdbc;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.neo4j.server.NeoServerWithEmbeddedWebServer;
-import org.neo4j.server.helpers.ServerBuilder;
+import org.neo4j.graphdb.*;
 
-import java.io.File;
-import java.io.IOException;
-import java.sql.*;
-import java.util.Properties;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 import static org.hamcrest.CoreMatchers.is;
 
-public class Neo4jQueryNodeTest
+public class Neo4jQueryNodeTest extends Neo4jJdbcTest
 {
-
-    private static NeoServerWithEmbeddedWebServer server;
-
-    private static Connection conn;
-
-    @BeforeClass
-    public static void setupDatabase() throws IOException
-    {
-        String testDatabase = new File(Neo4jQueryNodeTest.class.getResource("/graph.db/messages.log").getPath()).getParent();
-
-        server = ServerBuilder.server().persistent().usingDatabaseDir(testDatabase).build();
-        server.start();
-    }
-
-    @BeforeClass
-    public static void before() throws SQLException
-    {
-        conn = new Driver().connect("jdbc:neo4j://localhost:7475/", new Properties());
-    }
-
-    @AfterClass
-    public static void after()
-    {
-        try
-        {
-            conn.close();
-        } catch (Throwable e)
-        {
-            e.printStackTrace();
-        }
-    }
-
-    @AfterClass
-    public static void teardownDatabase()
-    {
- //       server.stop();
-    }
 
     @Test
     public void testGetTables() throws SQLException
@@ -88,6 +48,7 @@ public class Neo4jQueryNodeTest
     @Test
     public void testRetrieveNodes() throws SQLException
     {
+        createData(gdb);
         Statement stmt = conn.createStatement();
         ResultSet rs = stmt.executeQuery("start n=node(*) match p=n-[r?]-m return n,r,m,p,ID(n),length(p),n.name? as name limit 5");
         int count = 0;
@@ -107,6 +68,18 @@ public class Neo4jQueryNodeTest
         }
 
         Assert.assertThat(count, is(5));
+    }
+
+    private void createData(GraphDatabaseService gdb) {
+        final Transaction tx = gdb.beginTx();
+        final Node n1 = gdb.createNode();
+        n1.setProperty("name","n1");
+        final Node n2 = gdb.createNode();
+        final Node n3 = gdb.createNode();
+        final Node n4 = gdb.createNode();
+        final Relationship rel1 = n1.createRelationshipTo(n2, DynamicRelationshipType.withName("REL"));
+        rel1.setProperty("name","rel1");
+        tx.success();tx.finish();
     }
 }
 

@@ -34,27 +34,27 @@ import java.util.ServiceLoader;
 /**
  * TODO
  */
-public class DriverTest
+public class DriverTest extends Neo4jJdbcTest
 {
     Driver driver;
 
     @Before
-    public void before()
-    {
+    public void setUp() throws Exception {
+        super.setUp();
         driver = new Driver();
     }
 
     @Test
     public void testAcceptsURL() throws SQLException
     {
-        Assert.assertTrue(driver.acceptsURL("jdbc:neo4j://localhost:7474/db/data"));
+        Assert.assertTrue(driver.acceptsURL(jdbcUrl()));
         Assert.assertTrue(!driver.acceptsURL("jdbc:derby://localhost:7474/"));
     }
 
     @Test
     public void testURLProperties() throws SQLException
     {
-        Neo4jConnection conn = (Neo4jConnection) driver.connect("jdbc:neo4j://localhost:7474/?debug=false", new Properties());
+        Neo4jConnection conn = (Neo4jConnection) driver.connect(jdbcUrl()+"?debug=false", new Properties());
 
         Assert.assertThat(conn.getProperties().getProperty("debug"), CoreMatchers.equalTo("false"));
     }
@@ -64,7 +64,7 @@ public class DriverTest
     {
         try
         {
-            java.sql.Driver driver = DriverManager.getDriver("jdbc:neo4j://localhost:7474/");
+            java.sql.Driver driver = DriverManager.getDriver(jdbcUrl());
             Assert.assertNotNull(driver);
             Assert.assertEquals(this.driver.getClass(), driver.getClass());
         } catch (SQLException e)

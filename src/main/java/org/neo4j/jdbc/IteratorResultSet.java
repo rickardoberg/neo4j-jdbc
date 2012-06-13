@@ -33,28 +33,30 @@ import java.util.Map;
 /**
  * ResultSet implementation that is backed by an Iterator.
  */
-public class IteratorResultSet
-    implements ResultSet
+public class IteratorResultSet extends AbstractResultSet
 {
-    private boolean closed = false;
-    private List<Neo4jColumnMetaData> columns;
     private Iterator<List<Object>> data;
     private List<Object> currentRow;
-    private Neo4jConnection conn;
+    private int row = -1;
 
     public IteratorResultSet(List<Neo4jColumnMetaData> columns, Iterator<List<Object>> data, Neo4jConnection conn)
     {
-        this.columns = columns;
+        super(columns,conn);
         this.data = data;
-        this.conn = conn;
+    }
+
+    @Override
+    protected List<Object> currentRow() {
+        return currentRow;
     }
 
     @Override
     public boolean next() throws SQLException
     {
-        if (data.hasNext())
+        if (hasNext())
         {
             currentRow = data.next();
+            row ++;
             return true;
         } else
         {
@@ -71,327 +73,65 @@ public class IteratorResultSet
     @Override
     public boolean wasNull() throws SQLException
     {
-        return false;
+        return isBeforeFirst() && !hasNext();
     }
 
-    @Override
-    public String getString(int i) throws SQLException
-    {
-        Object value = currentRow.get(i - 1);
-        return value == null ? null : value.toString();
-    }
-
-    @Override
-    public boolean getBoolean(int i) throws SQLException
-    {
-        return (Boolean) currentRow.get(i-1);
-    }
-
-    @Override
-    public byte getByte(int i) throws SQLException
-    {
-        return (Byte) currentRow.get(i-1);
-    }
-
-    @Override
-    public short getShort(int i) throws SQLException
-    {
-        return (Short) currentRow.get(i-1);
-    }
-
-    @Override
-    public int getInt(int i) throws SQLException
-    {
-        Object value = currentRow.get(i - 1);
-        if (value == null || !(value instanceof Integer))
-            return 0;
-        else
-            return (Integer) value;
-    }
-
-    @Override
-    public long getLong(int i) throws SQLException
-    {
-        return (Long) currentRow.get(i-1);
-    }
-
-    @Override
-    public float getFloat(int i) throws SQLException
-    {
-        return (Float) currentRow.get(i-1);
-    }
-
-    @Override
-    public double getDouble(int i) throws SQLException
-    {
-        return (Double) currentRow.get(i-1);
-    }
-
-    @Override
-    public BigDecimal getBigDecimal(int i, int i1) throws SQLException
-    {
-        return (BigDecimal) currentRow.get(i-1);
-    }
-
-    @Override
-    public byte[] getBytes(int i) throws SQLException
-    {
-        return (byte[]) currentRow.get(i-1);
-    }
-
-    @Override
-    public Date getDate(int i) throws SQLException
-    {
-        return (Date) currentRow.get(i-1);
-    }
-
-    @Override
-    public Time getTime(int i) throws SQLException
-    {
-        return (Time) currentRow.get(i-1);
-    }
-
-    @Override
-    public Timestamp getTimestamp(int i) throws SQLException
-    {
-        return (Timestamp) currentRow.get(i-1);
-    }
-
-    @Override
-    public InputStream getAsciiStream(int i) throws SQLException
-    {
-        return (InputStream) currentRow.get(i-1);
-    }
-
-    @Override
-    public InputStream getUnicodeStream(int i) throws SQLException
-    {
-        return (InputStream) currentRow.get(i-1);
-    }
-
-    @Override
-    public InputStream getBinaryStream(int i) throws SQLException
-    {
-        return (InputStream) currentRow.get(i-1);
-    }
-
-    @Override
-    public String getString(String s) throws SQLException
-    {
-        return getString(findColumn(s));
-    }
-
-    @Override
-    public boolean getBoolean(String s) throws SQLException
-    {
-        return false;
-    }
-
-    @Override
-    public byte getByte(String s) throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public short getShort(String s) throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public int getInt(String s) throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public long getLong(String s) throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public float getFloat(String s) throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public double getDouble(String s) throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public BigDecimal getBigDecimal(String s, int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public byte[] getBytes(String s) throws SQLException
-    {
-        return new byte[0];
-    }
-
-    @Override
-    public Date getDate(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Time getTime(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Timestamp getTimestamp(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public InputStream getAsciiStream(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public InputStream getUnicodeStream(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public InputStream getBinaryStream(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public SQLWarning getWarnings() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public void clearWarnings() throws SQLException
-    {
-    }
-
-    @Override
-    public String getCursorName() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public ResultSetMetaData getMetaData() throws SQLException
-    {
-        return conn.debug(new Neo4jResultSetMetaData(columns));
-    }
-
-    @Override
-    public Object getObject(int i) throws SQLException
-    {
-        return currentRow.get(i-1);
-    }
-
-    @Override
-    public Object getObject(String s) throws SQLException
-    {
-        return getObject(findColumn(s));
-    }
-
-    @Override
-    public int findColumn(String s) throws SQLException
-    {
-        for (int i = 0; i < columns.size(); i++)
-        {
-            Neo4jColumnMetaData columnMetaData = columns.get(i);
-            if (columnMetaData.getName().equals(s))
-                return i+1;
-        }
-        throw new SQLException("No such column:"+s);
-    }
-
-    @Override
-    public Reader getCharacterStream(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Reader getCharacterStream(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public BigDecimal getBigDecimal(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public BigDecimal getBigDecimal(String s) throws SQLException
-    {
-        return null;
+    private boolean hasNext() {
+        return data.hasNext();
     }
 
     @Override
     public boolean isBeforeFirst() throws SQLException
     {
-        return false;
+        return row == -1;
     }
 
     @Override
     public boolean isAfterLast() throws SQLException
     {
-        return false;
+        return !hasNext();
     }
 
     @Override
     public boolean isFirst() throws SQLException
     {
-        return false;
+        return row == 0;
     }
 
     @Override
     public boolean isLast() throws SQLException
     {
-        return false;
+        return !hasNext();
     }
 
     @Override
     public void beforeFirst() throws SQLException
     {
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public void afterLast() throws SQLException
     {
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public boolean first() throws SQLException
     {
-        return false;
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public boolean last() throws SQLException
     {
-        return false;
+        throw new SQLException("Result set type is TYPE_FORWARD_ONLY");
     }
 
     @Override
     public int getRow() throws SQLException
     {
-        return 0;
+        return row;
     }
 
     @Override
@@ -443,676 +183,15 @@ public class IteratorResultSet
     }
 
     @Override
-    public int getConcurrency() throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public boolean rowUpdated() throws SQLException
-    {
-        return false;
-    }
-
-    @Override
-    public boolean rowInserted() throws SQLException
-    {
-        return false;
-    }
-
-    @Override
-    public boolean rowDeleted() throws SQLException
-    {
-        return false;
-    }
-
-    @Override
-    public void updateNull(int i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBoolean(int i, boolean b) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateByte(int i, byte b) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateShort(int i, short i1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateInt(int i, int i1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateLong(int i, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateFloat(int i, float v) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateDouble(int i, double v) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBigDecimal(int i, BigDecimal bigDecimal) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateString(int i, String s) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBytes(int i, byte[] bytes) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateDate(int i, Date date) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateTime(int i, Time time) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateTimestamp(int i, Timestamp timestamp) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateAsciiStream(int i, InputStream inputStream, int i1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBinaryStream(int i, InputStream inputStream, int i1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateCharacterStream(int i, Reader reader, int i1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateObject(int i, Object o, int i1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateObject(int i, Object o) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNull(String s) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBoolean(String s, boolean b) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateByte(String s, byte b) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateShort(String s, short i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateInt(String s, int i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateLong(String s, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateFloat(String s, float v) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateDouble(String s, double v) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBigDecimal(String s, BigDecimal bigDecimal) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateString(String s, String s1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBytes(String s, byte[] bytes) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateDate(String s, Date date) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateTime(String s, Time time) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateTimestamp(String s, Timestamp timestamp) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateAsciiStream(String s, InputStream inputStream, int i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBinaryStream(String s, InputStream inputStream, int i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateCharacterStream(String s, Reader reader, int i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateObject(String s, Object o, int i) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateObject(String s, Object o) throws SQLException
-    {
-    }
-
-    @Override
-    public void insertRow() throws SQLException
-    {
-    }
-
-    @Override
-    public void updateRow() throws SQLException
-    {
-    }
-
-    @Override
-    public void deleteRow() throws SQLException
-    {
-    }
-
-    @Override
-    public void refreshRow() throws SQLException
-    {
-    }
-
-    @Override
-    public void cancelRowUpdates() throws SQLException
-    {
-    }
-
-    @Override
-    public void moveToInsertRow() throws SQLException
-    {
-    }
-
-    @Override
-    public void moveToCurrentRow() throws SQLException
-    {
-    }
-
-    @Override
-    public Statement getStatement() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Object getObject(int i, Map<String, Class<?>> stringClassMap) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Ref getRef(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Blob getBlob(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Clob getClob(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Array getArray(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Object getObject(String s, Map<String, Class<?>> stringClassMap) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Ref getRef(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Blob getBlob(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Clob getClob(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Array getArray(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Date getDate(int i, Calendar calendar) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Date getDate(String s, Calendar calendar) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Time getTime(int i, Calendar calendar) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Time getTime(String s, Calendar calendar) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Timestamp getTimestamp(int i, Calendar calendar) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Timestamp getTimestamp(String s, Calendar calendar) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public URL getURL(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public URL getURL(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public void updateRef(int i, Ref ref) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateRef(String s, Ref ref) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBlob(int i, Blob blob) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBlob(String s, Blob blob) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateClob(int i, Clob clob) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateClob(String s, Clob clob) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateArray(int i, Array array) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateArray(String s, Array array) throws SQLException
-    {
-    }
-
-    @Override
-    public RowId getRowId(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public RowId getRowId(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public void updateRowId(int i, RowId rowId) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateRowId(String s, RowId rowId) throws SQLException
-    {
-    }
-
-    @Override
-    public int getHoldability() throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
     public boolean isClosed() throws SQLException
     {
         return closed;
     }
 
     @Override
-    public void updateNString(int i, String s) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNString(String s, String s1) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNClob(int i, NClob nClob) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNClob(String s, NClob nClob) throws SQLException
-    {
-    }
-
-    @Override
-    public NClob getNClob(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public NClob getNClob(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public SQLXML getSQLXML(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public SQLXML getSQLXML(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public void updateSQLXML(int i, SQLXML sqlxml) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateSQLXML(String s, SQLXML sqlxml) throws SQLException
-    {
-    }
-
-    @Override
-    public String getNString(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public String getNString(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Reader getNCharacterStream(int i) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Reader getNCharacterStream(String s) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public void updateNCharacterStream(int i, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNCharacterStream(String s, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateAsciiStream(int i, InputStream inputStream, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBinaryStream(int i, InputStream inputStream, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateCharacterStream(int i, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateAsciiStream(String s, InputStream inputStream, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBinaryStream(String s, InputStream inputStream, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateCharacterStream(String s, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBlob(int i, InputStream inputStream, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBlob(String s, InputStream inputStream, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateClob(int i, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateClob(String s, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNClob(int i, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNClob(String s, Reader reader, long l) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNCharacterStream(int i, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNCharacterStream(String s, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateAsciiStream(int i, InputStream inputStream) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBinaryStream(int i, InputStream inputStream) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateCharacterStream(int i, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateAsciiStream(String s, InputStream inputStream) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBinaryStream(String s, InputStream inputStream) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateCharacterStream(String s, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBlob(int i, InputStream inputStream) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateBlob(String s, InputStream inputStream) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateClob(int i, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateClob(String s, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNClob(int i, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public void updateNClob(String s, Reader reader) throws SQLException
-    {
-    }
-
-    @Override
-    public <T> T unwrap(Class<T> tClass) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public boolean isWrapperFor(Class<?> aClass) throws SQLException
-    {
-        return false;
-    }
-
-    @Override
     public String toString()
     {
-        return "Columns:"+columns;
+        return "Columns:"+columns +" current row "+row+": "+currentRow;
     }
 
 }
