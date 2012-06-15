@@ -1,4 +1,4 @@
-package org.neo4j.jdbc;
+package org.neo4j.jdbc.rest;
 
 import org.codehaus.jackson.JsonNode;
 
@@ -13,10 +13,14 @@ public class ResultParser {
 
     private final JsonNode node;
     private List<String> columns;
+    private int cols;
+    private final Object[] rowData;
 
     public ResultParser(JsonNode node) {
         this.node = node;
         this.columns = parseColumns();
+        this.cols = columns.size();
+        rowData = new Object[cols];
     }
 
     public List<String> getColumns() {
@@ -24,7 +28,7 @@ public class ResultParser {
     }
 
     public List<String> parseColumns() {
-        List<String> columns = new ArrayList<String>();
+        List<String> columns = new ArrayList<String>(20);
         for (JsonNode column : node.get("columns")) {
             String textValue = column.getTextValue();
             columns.add(textValue);
@@ -32,20 +36,24 @@ public class ResultParser {
         return columns;
     }
 
-    List<Map<String, Object>> parseData() {
-        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
-        for (JsonNode row : node.get("data")) {
-            Map<String, Object> rowData = parseRow(row);
-            data.add(rowData);
-        }
-        return data;
+    Iterator<Object[]> streamData() {
+        final Iterator<JsonNode> rows = node.get("data").iterator();
+        return new Iterator<Object[]>() {
+            public boolean hasNext() { return rows.hasNext(); }
+
+            public Object[] next() { return parseRow(rows.next()); }
+
+            public void remove() { throw new UnsupportedOperationException(); }
+        };
     }
 
-    private Map<String, Object> parseRow(JsonNode row) {
-        int idx = 0;
-        Map<String, Object> rowData = new LinkedHashMap<String, Object>();
+    private Object[] parseRow(JsonNode row) {
+        int i=0;
         for (JsonNode cell : row) {
-            rowData.put(columns.get(idx++), toObject(cell));
+            rowData[i++]=toObject(cell);
+        }
+        for (;i<cols;i++) {
+            rowData[i]=null;
         }
         return rowData;
     }
@@ -65,16 +73,16 @@ public class ResultParser {
             }
             return result;
         }
-        if (cell.isTextual()) return cell.asText();
-        if (cell.isBoolean()) return cell.asBoolean();
+        if (cell.isTextual()) return cell.getTextValue();
+        if (cell.isBoolean()) return cell.getBooleanValue();
         if (cell.isNumber()) return cell.getNumberValue();
-        return cell.asText();
+        return cell.getTextValue();
     }
 
     private Object addRelationshipInfo(JsonNode cell, Map<String, Object> result) {
         if (cell.has("start")) result.put("_start", idOf(cell.get("start")));
         if (cell.has("end")) result.put("_end", idOf(cell.get("end")));
-        if (cell.has("type")) result.put("_type", cell.get("type").asText());
+        if (cell.has("type")) result.put("_type", cell.get("type").getTextValue());
         return result;
     }
 
@@ -94,7 +102,7 @@ public class ResultParser {
     }
 
     private ArrayList<Object> toPath(JsonNode cell) {
-        ArrayList<Object> path = new ArrayList<Object>(cell.get("length").asInt() + 1);
+        ArrayList<Object> path = new ArrayList<Object>(cell.get("length").getIntValue() + 1);
         Iterator<JsonNode> nodes = cell.get("nodes").iterator();
         Iterator<JsonNode> relationships = cell.get("relationships").iterator();
         while (nodes.hasNext()) {
@@ -116,7 +124,7 @@ public class ResultParser {
         if (node == null) {
             return null;
         }
-        String uri = node.asText();
+        String uri = node.getTextValue();
         if (uri == null) return null;
         int idx = uri.lastIndexOf("/");
         return idx == -1 ? null : Long.valueOf(uri.substring(idx + 1));

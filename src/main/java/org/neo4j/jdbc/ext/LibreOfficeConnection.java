@@ -29,7 +29,6 @@ import org.restlet.Client;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -42,9 +41,9 @@ public class LibreOfficeConnection
     extends Neo4jConnection
     implements Connection
 {
-    public LibreOfficeConnection(Driver driver, String url, Client client, Properties properties) throws SQLException
+    public LibreOfficeConnection(Driver driver, String url, Properties properties) throws SQLException
     {
-        super(driver, url, client, properties);
+        super(driver, url, properties);
     }
 
     @Override

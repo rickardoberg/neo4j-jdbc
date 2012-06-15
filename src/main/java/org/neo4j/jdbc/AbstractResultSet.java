@@ -6,10 +6,8 @@ import java.io.StringReader;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.*;
-import java.util.Calendar;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.Date;
+import java.util.*;
 
 /**
  * @author mh
@@ -19,22 +17,38 @@ public abstract class AbstractResultSet implements ResultSet {
     protected boolean closed = false;
     protected List<Neo4jColumnMetaData> columns;
     protected Neo4jConnection conn;
-    protected Map<String, Integer> columnNames;
+    protected String[] columnNames;
+    protected int cols;
 
     public AbstractResultSet(List<Neo4jColumnMetaData> columns, Neo4jConnection conn) {
-        this.columnNames = extractColumnNames(columns);
         this.conn = conn;
+        this.cols = columns.size();
         this.columns = columns;
+        this.columnNames = extractColumnNames(columns);
     }
 
-    protected Map<String, Integer> extractColumnNames(List<Neo4jColumnMetaData> columns) {
-        Map<String, Integer>  columnNames = new LinkedHashMap<String,Integer>();
-        final int cols = columns.size();
-        for (int i = 0; i < cols; i++) {
-            columnNames.put(columns.get(i).getName(), i + 1);
+    public AbstractResultSet(Neo4jConnection conn,List<String> columns) {
+        this.conn = conn;
+        this.cols = columns.size();
+        this.columnNames = columns.toArray(new String[cols]);
+        this.columns = createMetadataFor(columns);
+    }
+
+    protected List<Neo4jColumnMetaData> createMetadataFor(List<String> columns) {
+        List<Neo4jColumnMetaData> result=new ArrayList<Neo4jColumnMetaData>(columns.size());
+        for (String column : columns) {
+            result.add(new Neo4jColumnMetaData(column,"String",Types.VARCHAR));
         }
-        System.out.println(columnNames);
-        return columnNames;
+        return result;
+    }
+
+    private String[] extractColumnNames(List<Neo4jColumnMetaData> columns) {
+        final String[] result = new String[columns.size()];
+        Map<String, Integer>  columnNames = new LinkedHashMap<String,Integer>();
+        for (int i = 0; i < cols; i++) {
+            result[i]=columns.get(i).getName();
+        }
+        return result;
     }
 
     @Override
@@ -79,11 +93,11 @@ public abstract class AbstractResultSet implements ResultSet {
     }
 
     private Object get(int column) throws SQLDataException {
-        if (column < 1 || column > currentRow().size()) throw new SQLDataException("Column "+column+" is invalid");
-        return currentRow().get(column - 1);
+        if (column < 1 || column > cols) throw new SQLDataException("Column "+column+" is invalid");
+        return currentRow()[column - 1];
     }
 
-    protected abstract List<Object> currentRow();
+    protected abstract Object[] currentRow();
 
     @Override
     public float getFloat(int i) throws SQLException
@@ -279,8 +293,11 @@ public abstract class AbstractResultSet implements ResultSet {
     @Override
     public int findColumn(String column) throws SQLException
     {
-        final Integer idx = columnNames.get(column);
-        if (idx != null) return idx;
+        if (column!=null) {
+            for (int i = 0; i < cols; i++) {
+                if (column.equals(columnNames[i])) return i+1;
+            }
+        }
         throw new SQLException("No such column:"+column);
     }
 

@@ -3,7 +3,6 @@ package org.neo4j.jdbc;
 import org.neo4j.jdbc.ext.DbVisualizerConnection;
 import org.neo4j.jdbc.ext.IntelliJConnection;
 import org.neo4j.jdbc.ext.LibreOfficeConnection;
-import org.restlet.Client;
 
 import java.sql.SQLException;
 import java.util.Properties;
@@ -18,8 +17,8 @@ public enum Connections {
             return sysProps.containsKey("org.openoffice.native");
         }
 
-        protected Neo4jConnection doCreate(Driver driver, String url, Client client, Properties p) throws SQLException {
-            return new LibreOfficeConnection(driver, url, client, p);
+        protected Neo4jConnection doCreate(Driver driver, String url, Properties p) throws SQLException {
+            return new LibreOfficeConnection(driver, url, p);
         }
     }, IntelliJ() {
         @Override
@@ -28,8 +27,8 @@ public enum Connections {
         }
 
         @Override
-        protected Neo4jConnection doCreate(Driver driver, String url, Client client, Properties p) throws SQLException {
-            return new IntelliJConnection(driver, url, client, p);
+        protected Neo4jConnection doCreate(Driver driver, String url, Properties p) throws SQLException {
+            return new IntelliJConnection(driver, url, p);
         }
     }, DbVisualizer() {
         @Override
@@ -38,8 +37,8 @@ public enum Connections {
         }
 
         @Override
-        protected Neo4jConnection doCreate(Driver driver, String url, Client client, Properties p) throws SQLException {
-            return new DbVisualizerConnection(driver, url, client, p);
+        protected Neo4jConnection doCreate(Driver driver, String url, Properties p) throws SQLException {
+            return new DbVisualizerConnection(driver, url, p);
         }
     }, Default() {
         @Override
@@ -48,19 +47,19 @@ public enum Connections {
         }
 
         @Override
-        protected Neo4jConnection doCreate(Driver driver, String url, Client client, Properties p) throws SQLException {
-            return new Neo4jConnection(driver, url, client, p);
+        protected Neo4jConnection doCreate(Driver driver, String url, Properties p) throws SQLException {
+            return new Neo4jConnection(driver, url, p);
         }
     };
 
     public static final String DB_VIS = "dbvis.ScriptsTreeShowDetails";
     protected abstract boolean matches(Properties sysProps);
 
-    public static Neo4jConnection create(Driver driver, String url, Client client, Properties p) throws SQLException {
+    public static Neo4jConnection create(Driver driver, String url, Properties p) throws SQLException {
         final Properties sysProps = System.getProperties();
         for (Connections connections : values()) {
             if (connections.matches(sysProps)) {
-                final Neo4jConnection con = connections.doCreate(driver, url, client, p);
+                final Neo4jConnection con = connections.doCreate(driver, url, p);
                 return debug(con,hasDebug(p));
             }
         }
@@ -80,5 +79,5 @@ public enum Connections {
             return obj;
     }
 
-    protected abstract Neo4jConnection doCreate(Driver driver, String url, Client client, Properties p) throws SQLException;
+    protected abstract Neo4jConnection doCreate(Driver driver, String url, Properties p) throws SQLException;
 }

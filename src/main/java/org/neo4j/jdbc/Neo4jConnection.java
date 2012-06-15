@@ -22,22 +22,12 @@ package org.neo4j.jdbc;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
 import org.neo4j.cypherdsl.CypherQuery;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
 import org.neo4j.cypherdsl.query.Expression;
-import org.restlet.Client;
-import org.restlet.data.*;
-import org.restlet.representation.Representation;
-import org.restlet.representation.StringRepresentation;
-import org.restlet.resource.ClientResource;
-import org.restlet.resource.ResourceException;
+import org.neo4j.jdbc.rest.RestQueryExecutor;
 
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.sql.*;
 import java.util.*;
 
@@ -46,50 +36,29 @@ import java.util.*;
  */
 public class Neo4jConnection extends AbstractConnection {
     protected final static Log log = LogFactory.getLog(Neo4jConnection.class);
-
-    private boolean closed = false;
     private String url;
-    private Properties properties;
-    private ClientResource cypherResource;
-    private ObjectMapper mapper = new ObjectMapper();
+
+    private QueryExecutor queryExecutor;
+    private boolean closed = false;
+    private final Properties properties = new Properties();
     private boolean debug;
     private Driver driver;
-    private String databaseProductVersion;
+    private Version version;
     
     private SQLWarning sqlWarnings;
     private boolean readonly = false;
-    private final Resources resources;
 
-    public Neo4jConnection(Driver driver, String jdbcUrl, Client client, Properties properties) throws SQLException
+    public Neo4jConnection(Driver driver, String jdbcUrl, Properties properties) throws SQLException
     {
         this.driver = driver;
         this.url = jdbcUrl;
-        this.properties = properties;
+        this.properties.putAll(properties);
         this.debug = hasDebug();
-
-        try
-        {
-            String url = "http" + jdbcUrl.substring("jdbc:neo4j".length());
-            if (log.isInfoEnabled()) log.info("Connecting to URL "+url);
-            resources = new Resources(url,client);
-
-            if (hasAuth()) {
-                resources.setAuth(getUser(), getPassword());
-            }
-
-            Resources.DiscoveryClientResource discovery = resources.getDiscoveryResource();
-
-            databaseProductVersion = discovery.getVersion();
-
-            validateVersion();
-
-            String cypherPath = discovery.getCypherPath();
-
-            cypherResource = resources.getCypherResource(cypherPath);
-        } catch (IOException e)
-        {
-            throw new SQLNonTransientConnectionException(e);
-        }
+        final String connectionUrl = jdbcUrl.substring("jdbc:neo4j".length());
+        
+        this.queryExecutor = new RestQueryExecutor(connectionUrl,getUser(),getPassword());
+        this.version = this.queryExecutor.getVersion();
+        validateVersion();
     }
 
     private String getPassword() {
@@ -109,8 +78,8 @@ public class Neo4jConnection extends AbstractConnection {
     }
 
     private void validateVersion() throws SQLException {
-        if (getMetaData().getDatabaseMajorVersion() != 1 || getMetaData().getDatabaseMinorVersion() < 5)
-            throw new SQLException("Unsupported Neo4j version:"+databaseProductVersion);
+        if (version.getMajorVersion() != 1 || version.getMinorVersion() < 5)
+            throw new SQLException("Unsupported Neo4j version:"+ version);
     }
 
     public Statement createStatement() throws SQLException
@@ -144,17 +113,16 @@ public class Neo4jConnection extends AbstractConnection {
     {
     }
 
-    public void close() throws SQLException
-    {
-        try
-        {
-            ((Client) cypherResource.getNext()).stop();
-        } catch (Exception e)
-        {
+    public void close() throws SQLException {
+        try {
+            queryExecutor.stop();
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            closed = true;
+
         }
 
-        closed = true;
     }
 
     public boolean isClosed() throws SQLException
@@ -255,19 +223,9 @@ public class Neo4jConnection extends AbstractConnection {
         checkReadOnly(query);
         try
         {
-            ObjectNode queryNode = queryParameter(query, parameters);
-
-            final ClientResource resource = new ClientResource(cypherResource);
-            Representation rep = resource.post(queryNode.toString(), MediaType.APPLICATION_JSON);
-
-            JsonNode node = mapper.readTree(rep.getReader());
-            final ResultParser parser = new ResultParser(node);
-            return debug(toResultSet(new ExecutionResult(parser.getColumns(), parser.parseData())));
-
-        } catch (ResourceException e)
-        {
-            throw new SQLException(e.getStatus().getReasonPhrase(),e);
-        } catch (Throwable e)
+            final ExecutionResult result = queryExecutor.doExecuteQuery(query, parameters);
+            return debug(toResultSet(result));
+        }catch (Exception e)
         {
             throw new SQLException(e);
         }
@@ -281,54 +239,6 @@ public class Neo4jConnection extends AbstractConnection {
         return query.matches("(?is).*\\b(create|relate|delete|set)\\b.*");
     }
 
-    private ObjectNode queryParameter(String query, Map<String, Object> parameters) {
-        ObjectNode queryNode = mapper.createObjectNode();
-        queryNode.put("query", escapeQuery(query));
-        queryNode.put("params", parametersNode(parameters));
-        return queryNode;
-    }
-
-    private String escapeQuery(String query) {
-        query = query.replace('\"', '\'');
-        query = query.replace('\n', ' ');
-        return query;
-    }
-
-    private ObjectNode parametersNode(Map<String, Object> parameters) {
-        ObjectNode params = mapper.createObjectNode();
-        for (Map.Entry<String, Object> entry : parameters.entrySet())
-        {
-            final String name = entry.getKey();
-            final Object value = entry.getValue();
-            if (value==null) {
-                params.putNull(name);
-            } else if (value instanceof String)
-                params.put(name, value.toString());
-            else if (value instanceof Integer)
-                params.put(name, (Integer) value);
-            else if (value instanceof Long)
-                params.put(name, (Long) value);
-            else if (value instanceof Boolean)
-                params.put(name, (Boolean) value);
-            else if (value instanceof BigDecimal)
-                params.put(name, (BigDecimal) value);
-            else if (value instanceof Double)
-                params.put(name, (Double) value);
-            else if (value instanceof byte[])
-                params.put(name, (byte[]) value);
-            else if (value instanceof Float)
-                params.put(name, (Float) value);
-            else if (value instanceof Number) {
-                final Number number = (Number) value;
-                if (number.longValue()==number.doubleValue()) {
-                    params.put(name, number.longValue());
-                } else {
-                    params.put(name, number.doubleValue());
-                }
-            }
-        }
-        return params;
-    }
 
     public String tableColumns(String tableName, String columnPrefix) throws SQLException
     {
@@ -361,18 +271,7 @@ public class Neo4jConnection extends AbstractConnection {
 
     protected ResultSet toResultSet(ExecutionResult result) throws SQLException
     {
-        ResultSetBuilder rs = new ResultSetBuilder();
-        for (String column : result.columns())
-        {
-            rs.column(column);
-        }
-
-        for (Map<String, Object> row : result)
-        {
-            rs.rowData(row.values());
-        }
-
-        return rs.newResultSet(this);
+        return new IteratorResultSet(this,result.columns(), result.getResult());
     }
 
     public <T> T debug(T obj)
@@ -390,8 +289,8 @@ public class Neo4jConnection extends AbstractConnection {
         return driver;
     }
 
-    public String getDatabaseProductVersion()
+    public Version getVersion()
     {
-        return databaseProductVersion;
+        return version;
     }
 }

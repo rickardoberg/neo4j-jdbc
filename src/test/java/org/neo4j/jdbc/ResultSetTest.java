@@ -1,23 +1,18 @@
 package org.neo4j.jdbc;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.neo4j.server.plugins.Parameter;
 
 import java.math.BigDecimal;
 import java.sql.ResultSet;
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author mh
@@ -44,7 +39,7 @@ public class ResultSetTest {
         col("BigDecimal", Types.NUMERIC));
 
         return Arrays.<ResultSet[]>asList(new ResultSet[]{new ListResultSet(columns, Arrays.<List<Object>>asList(row), null)},
-                new ResultSet[]{new IteratorResultSet(columns, Arrays.asList(row).iterator(), null)}
+                new ResultSet[]{new IteratorResultSet(columns, Arrays.<Object[]>asList(row.toArray()).iterator(), null)}
         );
     }
     public ResultSetTest(ResultSet rs) {

@@ -35,18 +35,23 @@ import java.util.Map;
  */
 public class IteratorResultSet extends AbstractResultSet
 {
-    private Iterator<List<Object>> data;
-    private List<Object> currentRow;
+    private Iterator<Object[]> data;
+    private Object[] currentRow;
     private int row = -1;
 
-    public IteratorResultSet(List<Neo4jColumnMetaData> columns, Iterator<List<Object>> data, Neo4jConnection conn)
+    public IteratorResultSet(List<Neo4jColumnMetaData> columns, Iterator<Object[]> data,Neo4jConnection conn)
     {
         super(columns,conn);
         this.data = data;
     }
+    public IteratorResultSet(Neo4jConnection conn, List<String> columns, Iterator<Object[]> data)
+    {
+        super(conn,columns);
+        this.data = data;
+    }
 
     @Override
-    protected List<Object> currentRow() {
+    protected Object[] currentRow() {
         return currentRow;
     }
 

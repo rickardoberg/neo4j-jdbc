@@ -21,6 +21,7 @@
 package org.neo4j.jdbc;
 
 import java.sql.*;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,8 +62,8 @@ public class ListResultSet extends AbstractResultSet {
     }
 
     @Override
-    protected List<Object> currentRow() {
-        return data.get(current);
+    protected Object[] currentRow() {
+        return data.get(current).toArray();
     }
 
     @Override
@@ -160,7 +161,7 @@ public class ListResultSet extends AbstractResultSet {
         String result = "Columns:"+columns;
         for (List<Object> row : data)
         {
-            result+="\n"+row;
+            result+="\n"+ row;
         }
         return result;
     }

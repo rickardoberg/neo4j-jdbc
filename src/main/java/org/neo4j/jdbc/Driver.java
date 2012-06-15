@@ -21,9 +21,6 @@
 package org.neo4j.jdbc;
 
 
-import org.restlet.Client;
-
-import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
@@ -36,7 +33,6 @@ public class Driver
     implements java.sql.Driver
 {
     private static final String CON_PREFIX = "jdbc:neo4j";
-    private final Client client = new Client("HTTP");
 
     static
     {
@@ -60,7 +56,7 @@ public class Driver
     {
         parseUrlProperties(url, properties);
 
-        return Connections.create(this, url, client, properties);
+        return Connections.create(this, url, properties);
     }
 
     public boolean acceptsURL(String s) throws SQLException

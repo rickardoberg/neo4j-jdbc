@@ -1,4 +1,4 @@
-package org.neo4j.jdbc;
+package org.neo4j.jdbc.rest;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -6,6 +6,7 @@ import org.restlet.Client;
 import org.restlet.Context;
 import org.restlet.data.*;
 import org.restlet.resource.ClientResource;
+import org.restlet.util.Series;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -123,7 +124,10 @@ public class Resources {
         public CypherClientResource(final Context context, String cypherPath, ObjectMapper mapper) {
             super(context, cypherPath);
             this.mapper = mapper;
-            getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
+            final Series<Parameter> parameters = new Series<Parameter>(Parameter.class);
+            parameters.add("stream", "true");
+            final MediaType mediaType = new MediaType(MediaType.APPLICATION_JSON.getName(), parameters);
+            getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(mediaType)));
         }
 
         @Override

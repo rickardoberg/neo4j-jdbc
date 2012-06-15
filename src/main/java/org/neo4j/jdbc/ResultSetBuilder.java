@@ -34,7 +34,6 @@ public class ResultSetBuilder
     private List<Neo4jColumnMetaData> columns = new ArrayList<Neo4jColumnMetaData>();
 
     private List<List<Object>> data = new ArrayList<List<Object>>();
-    private Iterable<List<Object>> streamingData;
 
     private List<Object> currentRow = new ArrayList<Object>();
 
@@ -72,12 +71,6 @@ public class ResultSetBuilder
         return rowData(Arrays.asList(values));
     }
 
-    public ResultSetBuilder data(Iterable<List<Object>> streamingData)
-    {
-        this.streamingData = streamingData;
-        return this;
-    }
-
     public ResultSetBuilder cell(String name, Object value)
     {
         int i = getColumnIndex(name);
@@ -89,10 +82,7 @@ public class ResultSetBuilder
 
     public ResultSet newResultSet(Connection connection) throws SQLException
     {
-        if (streamingData != null)
-            return new IteratorResultSet(columns, streamingData.iterator(), connection.unwrap(Neo4jConnection.class));
-        else
-            return new ListResultSet(columns, data, connection.unwrap(Neo4jConnection.class));
+        return new ListResultSet(columns, data, connection.unwrap(Neo4jConnection.class));
     }
 
     private int getColumnIndex(String name)
