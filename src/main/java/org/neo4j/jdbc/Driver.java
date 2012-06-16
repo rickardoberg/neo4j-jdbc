@@ -113,7 +113,7 @@ public class Driver implements java.sql.Driver {
     private Databases createDatabases() {
         try {
             return (Databases)Class.forName("org.neo4j.jdbc.embedded.EmbeddedDatabases").newInstance();
-        } catch (Exception e) {
+        } catch (Throwable e) {
             if (log.isInfoEnabled()) log.info("Embedded Neo4j support not enabled "+e.getMessage());
             return null;
         }
