@@ -54,7 +54,7 @@ public class RestQueryExecutor implements QueryExecutor {
                 }
     }
 
-    public ExecutionResult doExecuteQuery(String query, Map<String, Object> parameters) throws Exception {
+    public ExecutionResult executeQuery(String query, Map<String, Object> parameters) throws Exception {
     try
     {
         ObjectNode queryNode = queryParameter(query, parameters);

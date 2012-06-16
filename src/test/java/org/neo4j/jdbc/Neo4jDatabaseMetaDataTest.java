@@ -42,6 +42,10 @@ import java.util.Properties;
 public class Neo4jDatabaseMetaDataTest extends Neo4jJdbcTest
 {
 
+    public Neo4jDatabaseMetaDataTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Test
     public void testGetTables() throws SQLException
     {

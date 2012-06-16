@@ -13,6 +13,10 @@ import java.sql.SQLException;
  */
 @Ignore
 public class DbVisualizerConnectionTest extends Neo4jJdbcTest{
+    public DbVisualizerConnectionTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Override
     public void setUp() throws Exception {
         System.setProperty(Connections.DB_VIS,"true");

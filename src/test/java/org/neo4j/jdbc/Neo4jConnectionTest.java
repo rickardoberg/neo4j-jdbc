@@ -37,6 +37,10 @@ public class Neo4jConnectionTest extends Neo4jJdbcTest {
     private String columnPrefix = "_";
     private final String columnType = "String";
 
+    public Neo4jConnectionTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Test
     public void testGetMetaData() throws SQLException
     {

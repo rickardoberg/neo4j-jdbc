@@ -10,6 +10,7 @@ import org.restlet.util.Series;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author mh
@@ -58,7 +59,7 @@ public class Resources {
 
     public JsonNode readJsonFrom(String uri) throws IOException {
         ClientResource resource = new ClientResource(createContext(), uri);
-        resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
+        resource.getClientInfo().setAcceptedMediaTypes(streamingJson());
         return mapper.readTree(resource.get().getReader());
     }
 
@@ -76,7 +77,7 @@ public class Resources {
         public DiscoveryClientResource(Context context, Reference ref, ObjectMapper mapper) {
             super(context, ref);
             this.mapper = mapper;
-            getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
+            getClientInfo().setAcceptedMediaTypes(streamingJson());
         }
 
         public void setAuth(String user, String password) {
@@ -124,10 +125,7 @@ public class Resources {
         public CypherClientResource(final Context context, String cypherPath, ObjectMapper mapper) {
             super(context, cypherPath);
             this.mapper = mapper;
-            final Series<Parameter> parameters = new Series<Parameter>(Parameter.class);
-            parameters.add("stream", "true");
-            final MediaType mediaType = new MediaType(MediaType.APPLICATION_JSON.getName(), parameters);
-            getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(mediaType)));
+            getClientInfo().setAcceptedMediaTypes(streamingJson());
         }
 
         @Override
@@ -143,5 +141,16 @@ public class Resources {
 
             super.doError(errorStatus);
         }
+    }
+
+    private static List<Preference<MediaType>> streamingJson() {
+        final MediaType mediaType = streamingJsonType();
+        return Collections.singletonList(new Preference<MediaType>(mediaType));
+    }
+
+    private static MediaType streamingJsonType() {
+        final Series<Parameter> parameters = new Series<Parameter>(Parameter.class);
+        parameters.add("stream", "true");
+        return new MediaType(MediaType.APPLICATION_JSON.getName(), parameters);
     }
 }

@@ -60,6 +60,7 @@ public class Neo4jPreparedStatement extends AbstractPreparedStatement
     public int executeUpdate() throws SQLException
     {
         resultSet = connection.executeQuery(query, parameters);
+        while (resultSet.next());
         return 0; // todo
     }
 

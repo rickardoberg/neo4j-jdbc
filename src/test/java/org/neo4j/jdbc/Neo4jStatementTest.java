@@ -22,6 +22,7 @@ package org.neo4j.jdbc;
 
 import org.junit.Test;
 import org.neo4j.graphdb.Node;
+import org.neo4j.tooling.GlobalGraphOperations;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -29,19 +30,24 @@ import java.sql.SQLDataException;
 import java.sql.SQLException;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * TODO
  */
 public class Neo4jStatementTest extends Neo4jJdbcTest {
 
+    public Neo4jStatementTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Test
     public void testExecuteStatement() throws Exception {
         final ResultSet rs = conn.createStatement().executeQuery(REFERENCE_NODE_ID_QUERY);
         assertTrue(rs.next());
-        assertEquals(0, rs.getObject("id"));
+        assertEquals(0, ((Number)rs.getObject("id")).intValue());
         assertEquals(0L, rs.getLong("id"));
-        assertEquals(0, rs.getObject(1));
+        assertEquals(0, ((Number)rs.getObject(1)).intValue());
         assertEquals(0L, rs.getLong(1));
         assertFalse(rs.next());
     }
@@ -49,7 +55,9 @@ public class Neo4jStatementTest extends Neo4jJdbcTest {
     @Test(expected = SQLException.class)
     public void testPreparedStatementMissingParameter() throws Exception {
         final PreparedStatement ps = conn.prepareStatement("start n=node({1}) return ID(n) as id");
-        ps.executeQuery();
+        final ResultSet rs = ps.executeQuery();
+        rs.next();
+
     }
     @Test
     public void testExecutePreparedStatement() throws Exception {
@@ -57,9 +65,9 @@ public class Neo4jStatementTest extends Neo4jJdbcTest {
         ps.setLong(1,0L);
         final ResultSet rs = ps.executeQuery();
         assertTrue(rs.next());
-        assertEquals(0, rs.getObject("id"));
+        assertEquals(0, ((Number)rs.getObject("id")).intValue());
         assertEquals(0L, rs.getLong("id"));
-        assertEquals(0, rs.getObject(1));
+        assertEquals(0, ((Number)rs.getObject(1)).intValue());
         assertEquals(0L, rs.getLong(1));
         assertFalse(rs.next());
     }
@@ -68,10 +76,15 @@ public class Neo4jStatementTest extends Neo4jJdbcTest {
     public void testCreateNodeStatement() throws Exception {
         final PreparedStatement ps = conn.prepareStatement("create n={name:{1}}");
         ps.setString(1, "test");
-        final int count = ps.executeUpdate();
-        final Node n1 = gdb.getNodeById(1);
-        // TODO assertEquals(1, count);
-        assertEquals("test", n1.getProperty("name"));
+        // TODO int count = ps.executeUpdate();
+        int count = 0;
+        ps.executeUpdate();
+        for (Node node : GlobalGraphOperations.at(gdb).getAllNodes()) {
+            if (node.equals(gdb.getReferenceNode())) continue;
+            assertEquals("test", node.getProperty("name"));
+            count ++;
+        }
+        assertEquals(1, count);
     }
 
     @Test(expected = SQLException.class)

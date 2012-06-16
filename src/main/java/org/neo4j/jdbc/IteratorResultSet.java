@@ -43,11 +43,13 @@ public class IteratorResultSet extends AbstractResultSet
     {
         super(columns,conn);
         this.data = data;
+        data.hasNext();
     }
     public IteratorResultSet(Neo4jConnection conn, List<String> columns, Iterator<Object[]> data)
     {
         super(conn,columns);
         this.data = data;
+        data.hasNext();
     }
 
     @Override

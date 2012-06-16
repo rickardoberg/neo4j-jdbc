@@ -7,7 +7,7 @@ import java.util.Map;
 * @since 15.06.12
 */
 public interface QueryExecutor {
-    ExecutionResult doExecuteQuery(String query, Map<String, Object> parameters) throws Exception;
+    ExecutionResult executeQuery(String query, Map<String, Object> parameters) throws Exception;
 
     void stop() throws Exception;
 

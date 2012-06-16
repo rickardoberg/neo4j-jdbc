@@ -1,9 +1,8 @@
 package org.neo4j.jdbc;
 
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.*;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -11,10 +10,10 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.server.web.WebServer;
 import org.neo4j.test.ImpermanentGraphDatabase;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
 import java.util.Properties;
 
 import static org.neo4j.jdbc.TestWebServer.startWebServer;
@@ -23,23 +22,54 @@ import static org.neo4j.jdbc.TestWebServer.startWebServer;
  * @author mh
  * @since 12.06.12
  */
+@RunWith(Parameterized.class)
+@Ignore
 public class Neo4jJdbcTest {
+    public static final int PORT = 7475;
     protected static final String REFERENCE_NODE_ID_QUERY = "start n=node(0) return ID(n) as id";
     protected Neo4jConnection conn;
-    public static final int PORT = 7475;
     protected static ImpermanentGraphDatabase gdb;
     private static WebServer webServer;
+    protected final Mode mode;
+
+    public enum Mode { embedded, server }
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        return Arrays.<Object[]>asList(new Object[]{Mode.embedded},new Object[]{Mode.server});
+    }
 
     @BeforeClass
     public static void before() {
         gdb = new ImpermanentGraphDatabase();
-        webServer = startWebServer(gdb, PORT);
     }
+    public Neo4jJdbcTest(Mode mode) throws SQLException {
+        this.mode = mode;
+        System.out.println("Mode "+mode);
+        final Driver driver = new Driver();
+        final Properties props = new Properties();
+        gdb.cleanContent(true);
+        switch (mode) {
+            case embedded:
+                props.put("db",gdb);
+                conn = driver.connect("jdbc:neo4j:instance:db", props);
+                break;
+            case server:
+                if (webServer==null) {
+                    webServer = startWebServer(gdb, PORT);
+                }
+                conn = driver.connect("jdbc:neo4j://localhost:"+PORT, props);
+                break;
+        }
+    }
+
 
     @AfterClass
     public static void after() {
         try {
-            webServer.stop();
+            if (webServer!=null) {
+                webServer.stop();
+                webServer = null;
+            }
             gdb.shutdown();
         } catch (Throwable e) {
             e.printStackTrace();
@@ -49,7 +79,6 @@ public class Neo4jJdbcTest {
     @Before
     public void setUp() throws SQLException, Exception {
         gdb.cleanContent(true);
-        conn = new Driver().connect(jdbcUrl(), new Properties());
     }
 
     protected String jdbcUrl() {

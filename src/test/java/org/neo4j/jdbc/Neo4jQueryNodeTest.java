@@ -34,6 +34,10 @@ import static org.hamcrest.CoreMatchers.is;
 public class Neo4jQueryNodeTest extends Neo4jJdbcTest
 {
 
+    public Neo4jQueryNodeTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Test
     public void testGetTables() throws SQLException
     {

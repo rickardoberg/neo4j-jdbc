@@ -26,6 +26,8 @@ import org.neo4j.cypherdsl.CypherQuery;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
 import org.neo4j.cypherdsl.query.Expression;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.jdbc.embedded.EmbeddedQueryExecutor;
 import org.neo4j.jdbc.rest.RestQueryExecutor;
 
 import java.sql.*;
@@ -55,10 +57,16 @@ public class Neo4jConnection extends AbstractConnection {
         this.properties.putAll(properties);
         this.debug = hasDebug();
         final String connectionUrl = jdbcUrl.substring("jdbc:neo4j".length());
-        
-        this.queryExecutor = new RestQueryExecutor(connectionUrl,getUser(),getPassword());
+        this.queryExecutor = createExecutor(connectionUrl,getUser(),getPassword());
         this.version = this.queryExecutor.getVersion();
         validateVersion();
+    }
+
+    private QueryExecutor createExecutor(String connectionUrl, String user, String password) throws SQLException {
+        if (connectionUrl.contains("://"))
+            return new RestQueryExecutor(connectionUrl,user,password);
+
+        return getDriver().createExecutor(connectionUrl,properties);
     }
 
     private String getPassword() {
@@ -223,9 +231,9 @@ public class Neo4jConnection extends AbstractConnection {
         checkReadOnly(query);
         try
         {
-            final ExecutionResult result = queryExecutor.doExecuteQuery(query, parameters);
+            final ExecutionResult result = queryExecutor.executeQuery(query, parameters);
             return debug(toResultSet(result));
-        }catch (Exception e)
+        } catch (Exception e)
         {
             throw new SQLException(e);
         }

@@ -38,6 +38,10 @@ public class DriverTest extends Neo4jJdbcTest
 {
     Driver driver;
 
+    public DriverTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Before
     public void setUp() throws Exception {
         super.setUp();
@@ -54,9 +58,9 @@ public class DriverTest extends Neo4jJdbcTest
     @Test
     public void testURLProperties() throws SQLException
     {
-        Neo4jConnection conn = (Neo4jConnection) driver.connect(jdbcUrl()+"?debug=false", new Properties());
-
-        Assert.assertThat(conn.getProperties().getProperty("debug"), CoreMatchers.equalTo("false"));
+        final Properties properties = new Properties();
+        driver.parseUrlProperties(jdbcUrl()+"?debug=false", properties);
+        Assert.assertThat(properties.getProperty("debug"), CoreMatchers.equalTo("false"));
     }
     
     @Test
