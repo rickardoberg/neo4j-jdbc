@@ -84,6 +84,7 @@
             <artifactId>neo4j</artifactId>
             <version>${neo4j.version}</version>
             <optional>true</optional>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.neo4j</groupId>
@@ -91,7 +92,7 @@
             <version>${neo4j.version}</version>
             <type>test-jar</type>
             <optional>true</optional>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
 
         <!-- Testing -->
@@ -175,8 +176,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <appendAssemblyId>false</appendAssemblyId>
-
+                    <appendAssemblyId>true</appendAssemblyId>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
