@@ -1,5 +1,10 @@
 package org.neo4j.jdbc;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.neo4j.jdbc.rest.RestQueryExecutor;
+
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -14,13 +19,29 @@ import java.util.*;
  * @since 13.06.12
  */
 public abstract class AbstractResultSet implements ResultSet {
-    protected boolean closed = false;
-    protected List<Neo4jColumnMetaData> columns;
-    protected Neo4jConnection conn;
-    protected String[] columnNames;
-    protected int cols;
+    protected final static Log log = LogFactory.getLog(AbstractResultSet.class);
+    
+    private boolean closed = false;
+    private List<Neo4jColumnMetaData> columns;
+    private Neo4jConnection conn;
+    private String[] columnNames;
+    private int cols;
+    private boolean wasNull=false;
+    private static final ObjectMapper OBJECT_MAPPER=new ObjectMapper();
 
-    public AbstractResultSet(List<Neo4jColumnMetaData> columns, Neo4jConnection conn) {
+    @Override
+	public boolean wasNull() throws SQLException {
+		return wasNull;
+	}
+    
+    @Override
+    public String toString()
+    {
+        return "Columns: "+Arrays.toString(columnNames);
+    }
+    
+
+	public AbstractResultSet(List<Neo4jColumnMetaData> columns, Neo4jConnection conn) {
         this.conn = conn;
         this.cols = columns.size();
         this.columns = columns;
@@ -51,12 +72,26 @@ public abstract class AbstractResultSet implements ResultSet {
         return result;
     }
 
-    @Override
-    public String getString(int i) throws SQLException
-    {
-        Object value = get(i);
-        return value == null ? null : value.toString();
-    }
+	@Override
+	public String getString(int i) throws SQLException {
+		Object value = get(i);
+
+		if (value == null)
+			return null;
+        final Class<?> type = value.getClass();
+		if (String.class.equals(type))
+			return (String) value;
+        if (type.isPrimitive() || Number.class.isAssignableFrom(type)) {
+            return value.toString();
+        }
+        try {
+            return OBJECT_MAPPER.writeValueAsString(value);
+        } catch (Exception e) {
+           if (log.isDebugEnabled()) log.debug("Couldn't convert value "+value+" of type "+type+" to JSON "+e.getMessage());
+        }
+        return value.toString();
+
+	}
 
     @Override
     public boolean getBoolean(int i) throws SQLException
@@ -94,7 +129,9 @@ public abstract class AbstractResultSet implements ResultSet {
 
     private Object get(int column) throws SQLDataException {
         if (column < 1 || column > cols) throw new SQLDataException("Column "+column+" is invalid");
-        return currentRow()[column - 1];
+        Object value=currentRow()[column - 1];
+        wasNull=value==null;
+        return value;
     }
 
     protected abstract Object[] currentRow();
@@ -1014,5 +1051,17 @@ public abstract class AbstractResultSet implements ResultSet {
     public boolean isWrapperFor(Class<?> aClass) throws SQLException
     {
         return false;
+    }
+
+    @Override
+    public void close() throws SQLException
+    {
+        closed = true;
+    }
+
+    @Override
+    public boolean isClosed() throws SQLException
+    {
+        return closed;
     }
 }

@@ -20,15 +20,10 @@
 
 package org.neo4j.jdbc;
 
-import java.io.InputStream;
-import java.io.Reader;
-import java.math.BigDecimal;
-import java.net.URL;
 import java.sql.*;
-import java.util.Calendar;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 /**
  * ResultSet implementation that is backed by an Iterator.
@@ -74,13 +69,7 @@ public class IteratorResultSet extends AbstractResultSet
     @Override
     public void close() throws SQLException
     {
-        closed = true;
-    }
-
-    @Override
-    public boolean wasNull() throws SQLException
-    {
-        return isBeforeFirst() && !hasNext();
+        super.close();
     }
 
     private boolean hasNext() {
@@ -192,13 +181,13 @@ public class IteratorResultSet extends AbstractResultSet
     @Override
     public boolean isClosed() throws SQLException
     {
-        return closed;
+        return super.isClosed();
     }
 
     @Override
     public String toString()
     {
-        return "Columns:"+columns +" current row "+row+": "+currentRow;
+        return super.toString() +" current row "+row+": "+ Arrays.toString(currentRow);
     }
 
 }

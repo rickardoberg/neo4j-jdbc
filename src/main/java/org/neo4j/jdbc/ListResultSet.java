@@ -50,18 +50,6 @@ public class ListResultSet extends AbstractResultSet {
     }
 
     @Override
-    public void close() throws SQLException
-    {
-        closed = true;
-    }
-
-    @Override
-    public boolean wasNull() throws SQLException
-    {
-        return false;
-    }
-
-    @Override
     protected Object[] currentRow() {
         return data.get(current).toArray();
     }
@@ -150,15 +138,9 @@ public class ListResultSet extends AbstractResultSet {
     }
 
     @Override
-    public boolean isClosed() throws SQLException
-    {
-        return closed;
-    }
-
-    @Override
     public String toString()
     {
-        String result = "Columns:"+columns;
+        String result = super.toString();
         for (List<Object> row : data)
         {
             result+="\n"+ row;

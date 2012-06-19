@@ -73,8 +73,11 @@ public enum Connections {
     @SuppressWarnings("unchecked")
     public static <T> T debug(T obj, boolean debug) {
         if (debug) {
-            Class type = obj.getClass().getInterfaces()[0];
-            return (T) CallProxy.proxy(type, obj);
+		Class[] interfaces=obj.getClass().getInterfaces();
+		if(interfaces!=null&&interfaces.length>0)
+			return (T) CallProxy.proxy(interfaces[0], obj);
+		return obj;
+
         } else
             return obj;
     }
