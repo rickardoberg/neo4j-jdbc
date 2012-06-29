@@ -37,7 +37,7 @@ import java.util.Collections;
 import java.util.Properties;
 
 /**
- * TODO
+ * JDBC Driver implementation that is backed by a REST Neo4j Server.
  */
 public class Driver
     implements java.sql.Driver

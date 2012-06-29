@@ -39,7 +39,7 @@ import java.sql.*;
 import java.util.*;
 
 /**
- * TODO
+ * Implementation of Connection that delegates to the Neo4j REST API and sends queries as Cypher requests
  */
 public class Neo4jConnection
         implements Connection

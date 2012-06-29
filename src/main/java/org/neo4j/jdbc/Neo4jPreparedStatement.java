@@ -30,7 +30,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * TODO
+ * Implementation of PreparedStatement. Parameters in Cypher queries have to be done as {nr}, as calls to methods
+ * here will be saved in a parameter map with "nr"->value, since JDBC does not support named parameters.
  */
 public class Neo4jPreparedStatement
     extends Neo4jStatement

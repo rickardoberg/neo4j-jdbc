@@ -23,7 +23,8 @@ package org.neo4j.jdbc;
 import java.sql.*;
 
 /**
- * TODO
+ * Provides metadata about a Neo4j database. Tables are implemented with type nodes, and columns are property nodes
+ * attached to those type nodes.
  */
 public class Neo4jDatabaseMetaData
         implements DatabaseMetaData

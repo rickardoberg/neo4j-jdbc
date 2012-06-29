@@ -24,7 +24,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * TODO
+ * Cypher execution result.
  */
 public class ExecutionResult implements Iterable<Map<String,Object>>
 {

@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * TODO
+ * ResultSet implementation that is backed by Lists.
  */
 public class ListResultSet
     implements ResultSet

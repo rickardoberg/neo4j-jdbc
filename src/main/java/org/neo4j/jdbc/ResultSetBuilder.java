@@ -27,7 +27,7 @@ import java.sql.Types;
 import java.util.*;
 
 /**
- * TODO
+ * Helper to build ResultSets using a fluent DSL approach.
  */
 public class ResultSetBuilder
 {
