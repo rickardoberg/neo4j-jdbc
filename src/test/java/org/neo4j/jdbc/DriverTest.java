@@ -20,40 +20,73 @@
 
 package org.neo4j.jdbc;
 
+
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.ServiceLoader;
 
 /**
  * TODO
  */
-public class DriverTest
+public class DriverTest extends Neo4jJdbcTest
 {
     Driver driver;
 
+    public DriverTest(Mode mode) throws SQLException {
+        super(mode);
+    }
+
     @Before
-    public void before()
-    {
+    public void setUp() throws Exception {
+        super.setUp();
         driver = new Driver();
     }
 
     @Test
     public void testAcceptsURL() throws SQLException
     {
-        Assert.assertTrue(driver.acceptsURL("jdbc:neo4j://localhost:7474/db/data"));
+        Assert.assertTrue(driver.acceptsURL(jdbcUrl()));
         Assert.assertTrue(!driver.acceptsURL("jdbc:derby://localhost:7474/"));
     }
 
     @Test
     public void testURLProperties() throws SQLException
     {
-        Neo4jConnection conn = (Neo4jConnection) driver.connect("jdbc:neo4j://localhost:7474/?debug=false", new Properties());
+        final Properties properties = new Properties();
+        driver.parseUrlProperties(jdbcUrl()+"?debug=false", properties);
+        Assert.assertThat(properties.getProperty("debug"), CoreMatchers.equalTo("false"));
+    }
+    
+    @Test
+    public void testDriverRegistration()
+    {
+        try
+        {
+            java.sql.Driver driver = DriverManager.getDriver(jdbcUrl());
+            Assert.assertNotNull(driver);
+            Assert.assertEquals(this.driver.getClass(), driver.getClass());
+        } catch (SQLException e)
+        {
+            Assert.fail(e.getLocalizedMessage());
+        }
 
-        Assert.assertThat(conn.getProperties().getProperty("debug"), CoreMatchers.equalTo("false"));
+    }
+
+    @Test
+    public void testDriverService()
+    {
+        ServiceLoader<java.sql.Driver> serviceLoader = ServiceLoader.load(java.sql.Driver.class);
+        for (java.sql.Driver driver : serviceLoader)
+        {
+            if (Driver.class.isInstance(driver))
+                return;
+        }
+        Assert.fail(Driver.class.getName() + " not registered as a Service");
     }
 }

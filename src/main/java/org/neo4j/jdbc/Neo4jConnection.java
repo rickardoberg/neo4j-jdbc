@@ -20,99 +20,74 @@
 
 package org.neo4j.jdbc;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ObjectNode;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.neo4j.cypherdsl.CypherQuery;
 import org.neo4j.cypherdsl.Execute;
 import org.neo4j.cypherdsl.ExecuteWithParameters;
-import org.neo4j.cypherdsl.query.ReturnExpression;
-import org.restlet.Client;
-import org.restlet.Context;
-import org.restlet.data.*;
-import org.restlet.representation.Representation;
-import org.restlet.representation.StringRepresentation;
-import org.restlet.resource.ClientResource;
-import org.restlet.resource.ResourceException;
+import org.neo4j.cypherdsl.query.Expression;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.jdbc.embedded.EmbeddedQueryExecutor;
+import org.neo4j.jdbc.rest.RestQueryExecutor;
 
-import java.io.IOException;
 import java.sql.*;
 import java.util.*;
 
 /**
  * Implementation of Connection that delegates to the Neo4j REST API and sends queries as Cypher requests
  */
-public class Neo4jConnection
-        implements Connection
-{
-    private boolean closed = false;
+public class Neo4jConnection extends AbstractConnection {
+    protected final static Log log = LogFactory.getLog(Neo4jConnection.class);
     private String url;
-    private Properties properties;
-    private ClientResource cypherResource;
-    private ObjectMapper mapper = new ObjectMapper();
+
+    private QueryExecutor queryExecutor;
+    private boolean closed = false;
+    private final Properties properties = new Properties();
     private boolean debug;
     private Driver driver;
-    private String databaseProductVersion;
+    private Version version;
     
     private SQLWarning sqlWarnings;
+    private boolean readonly = false;
 
-    public Neo4jConnection(Driver driver, String url, Client client, Properties properties) throws SQLException
+    public Neo4jConnection(Driver driver, String jdbcUrl, Properties properties) throws SQLException
     {
         this.driver = driver;
-        this.url = url;
-        this.properties = properties;
-        this.debug = "true".equalsIgnoreCase(properties.getProperty("debug"));
+        this.url = jdbcUrl;
+        this.properties.putAll(properties);
+        this.debug = hasDebug();
+        final String connectionUrl = jdbcUrl.substring("jdbc:neo4j".length());
+        this.queryExecutor = createExecutor(connectionUrl,getUser(),getPassword());
+        this.version = this.queryExecutor.getVersion();
+        validateVersion();
+    }
 
-        try
-        {
-            url = "http" + url.substring("jdbc:neo4j".length());
-            Reference ref = new Reference(new Reference(url), "/");
-            Context context = new Context();
-            context.setClientDispatcher(client);
-            
-            ClientResource resource = new ClientResource(context, ref);
-            
-            if (properties.contains("user") && properties.contains("password"))
-                resource.setChallengeResponse(ChallengeScheme.HTTP_BASIC, properties.getProperty("user"), properties.getProperty("password"));
-            
-            resource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
+    private QueryExecutor createExecutor(String connectionUrl, String user, String password) throws SQLException {
+        if (connectionUrl.contains("://"))
+            return new RestQueryExecutor(connectionUrl,user,password);
 
-            // Get service root
-            JsonNode node = mapper.readTree(resource.get().getReader());
-            ClientResource dataResource = new ClientResource(resource.getContext(), node.get("data").getTextValue());
-            dataResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
+        return getDriver().createExecutor(connectionUrl,properties);
+    }
 
-            node = mapper.readTree(dataResource.get().getReader());
-            databaseProductVersion = node.get("neo4j_version").getTextValue();
+    private String getPassword() {
+        return properties.getProperty("password");
+    }
 
-            // Version check
-            if (getMetaData().getDatabaseMajorVersion() != 1 || getMetaData().getDatabaseMinorVersion() < 5)
-                throw new SQLException("Unsupported Neo4j version:"+databaseProductVersion);
+    private String getUser() {
+        return properties.getProperty("user");
+    }
 
-            // Get Cypher extension
-            cypherResource = new ClientResource(dataResource.getContext(), node.get("extensions").get("CypherPlugin").get("execute_query").getTextValue())
-            {
-                @Override
-                public void doError(Status errorStatus)
-                {
-                    try
-                    {
-                        JsonNode node = mapper.readTree(this.getResponse().getEntity().getReader());
-                        JsonNode message = node.get("message");
-                        if (message != null)
-                            super.doError(new Status(errorStatus.getCode(), message.toString(), message.toString(), errorStatus.getUri()));
-                    } catch (IOException e)
-                    {
-                        // Ignore
-                    }
+    private boolean hasAuth() {
+        return properties.contains("user") && properties.contains("password");
+    }
 
-                    super.doError(errorStatus);
-                }
-            };
-            cypherResource.getClientInfo().setAcceptedMediaTypes(Collections.singletonList(new Preference<MediaType>(MediaType.APPLICATION_JSON)));
-        } catch (IOException e)
-        {
-            throw new SQLNonTransientConnectionException(e);
-        }
+    private boolean hasDebug() {
+        return Connections.hasDebug(properties);
+    }
+
+    private void validateVersion() throws SQLException {
+        if (version.getMajorVersion() != 1 || version.getMinorVersion() < 5)
+            throw new SQLException("Unsupported Neo4j version:"+ version);
     }
 
     public Statement createStatement() throws SQLException
@@ -120,21 +95,9 @@ public class Neo4jConnection
         return debug(new Neo4jStatement(this));
     }
 
-    public PreparedStatement prepareStatement(String s) throws SQLException
+    public PreparedStatement prepareStatement(String statement) throws SQLException
     {
-        return debug(new Neo4jPreparedStatement(this, s));
-    }
-
-    @Override
-    public CallableStatement prepareCall(String sql) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public String nativeSQL(String sql) throws SQLException
-    {
-        return sql;
+        return debug(new Neo4jPreparedStatement(this, statement));
     }
 
     @Override
@@ -158,17 +121,16 @@ public class Neo4jConnection
     {
     }
 
-    public void close() throws SQLException
-    {
-        try
-        {
-            ((Client) cypherResource.getNext()).stop();
-        } catch (Exception e)
-        {
+    public void close() throws SQLException {
+        try {
+            queryExecutor.stop();
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            closed = true;
+
         }
 
-        closed = true;
     }
 
     public boolean isClosed() throws SQLException
@@ -184,34 +146,13 @@ public class Neo4jConnection
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException
     {
+        this.readonly=readOnly;
     }
 
     @Override
     public boolean isReadOnly() throws SQLException
     {
-        return true;
-    }
-
-    @Override
-    public void setCatalog(String catalog) throws SQLException
-    {
-    }
-
-    @Override
-    public String getCatalog() throws SQLException
-    {
-        return "Default";
-    }
-
-    @Override
-    public void setTransactionIsolation(int level) throws SQLException
-    {
-    }
-
-    @Override
-    public int getTransactionIsolation() throws SQLException
-    {
-        return 0;
+        return readonly;
     }
 
     @Override
@@ -238,55 +179,6 @@ public class Neo4jConnection
         return debug(new Neo4jPreparedStatement(this, nativeSQL(sql)));
     }
 
-    @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Map<String, Class<?>> getTypeMap() throws SQLException
-    {
-        return new HashMap<String, Class<?>>();
-    }
-
-    @Override
-    public void setTypeMap(Map<String, Class<?>> map) throws SQLException
-    {
-    }
-
-    @Override
-    public void setHoldability(int holdability) throws SQLException
-    {
-    }
-
-    @Override
-    public int getHoldability() throws SQLException
-    {
-        return 0;
-    }
-
-    @Override
-    public Savepoint setSavepoint() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Savepoint setSavepoint(String name) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public void rollback(Savepoint savepoint) throws SQLException
-    {
-    }
-
-    @Override
-    public void releaseSavepoint(Savepoint savepoint) throws SQLException
-    {
-    }
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
@@ -298,12 +190,6 @@ public class Neo4jConnection
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
     {
         return debug(new Neo4jPreparedStatement(this, nativeSQL(sql)));
-    }
-
-    @Override
-    public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency, int resultSetHoldability) throws SQLException
-    {
-        return null;
     }
 
     @Override
@@ -325,79 +211,9 @@ public class Neo4jConnection
     }
 
     @Override
-    public Clob createClob() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Blob createBlob() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public NClob createNClob() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public SQLXML createSQLXML() throws SQLException
-    {
-        return null;
-    }
-
-    @Override
     public boolean isValid(int timeout) throws SQLException
     {
         return true;
-    }
-
-    @Override
-    public void setClientInfo(String name, String value) throws SQLClientInfoException
-    {
-    }
-
-    @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException
-    {
-    }
-
-    @Override
-    public String getClientInfo(String name) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Properties getClientInfo() throws SQLException
-    {
-        return new Properties();
-    }
-
-    @Override
-    public Array createArrayOf(String typeName, Object[] elements) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public Struct createStruct(String typeName, Object[] attributes) throws SQLException
-    {
-        return null;
-    }
-
-    @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException
-    {
-        return (T) this;
-    }
-
-    @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException
-    {
-        return false;
     }
 
     // Connection helpers
@@ -409,61 +225,28 @@ public class Neo4jConnection
             return executeQuery(execute.toString(), Collections.<String, Object>emptyMap());
     }
 
-    public ResultSet executeQuery(String query, Map<String, Object> parameters) throws SQLException
+    public ResultSet executeQuery(final String query, Map<String, Object> parameters) throws SQLException
     {
-        query = query.replace('\"', '\'');
-        query = query.replace('\n', ' ');
-
-        ObjectNode queryNode = mapper.createObjectNode();
-        queryNode.put("query", query);
-        ObjectNode params = mapper.createObjectNode();
-        for (Map.Entry<String, Object> stringObjectEntry : parameters.entrySet())
-        {
-            Object value = stringObjectEntry.getValue();
-            if (value instanceof String)
-                params.put(stringObjectEntry.getKey(), value.toString());
-            else if (value instanceof Integer)
-                params.put(stringObjectEntry.getKey(), (Integer) value);
-            else if (value instanceof Long)
-                params.put(stringObjectEntry.getKey(), (Long) value);
-            else if (value instanceof Boolean)
-                params.put(stringObjectEntry.getKey(), (Boolean) value);
-        }
-        queryNode.put("params", params);
-
-        Representation req = new StringRepresentation(queryNode.toString(), MediaType.APPLICATION_JSON);
+        if (log.isInfoEnabled()) log.info("Executing query: "+query+"\n with params"+parameters);
+        checkReadOnly(query);
         try
         {
-            Representation rep = cypherResource.post(req);
-            JsonNode node = mapper.readTree(rep.getReader());
-
-            List<String> columns = new ArrayList<String>();
-            for (JsonNode column : node.get("columns"))
-            {
-                String textValue = column.getTextValue();
-                columns.add(textValue);
-            }
-
-            List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
-            for (JsonNode row : node.get("data"))
-            {
-                int idx = 0;
-                Map<String, Object> rowData = new LinkedHashMap<String, Object>();
-                for (JsonNode cell : row)
-                {
-                    rowData.put(columns.get(idx++), cell.asText());
-                }
-                data.add(rowData);
-            }
-            return debug(toResultSet(new ExecutionResult(columns, data)));
-        } catch (ResourceException e)
-        {
-            throw new SQLException(e.getStatus().getReasonPhrase());
-        } catch (Throwable e)
+            final ExecutionResult result = queryExecutor.executeQuery(query, parameters);
+            return debug(toResultSet(result));
+        } catch (Exception e)
         {
             throw new SQLException(e);
         }
     }
+
+    private void checkReadOnly(String query) throws SQLException {
+        if (readonly && isMutating(query)) throw new SQLException("Mutating Query in readonly mode: "+query);
+    }
+
+    private boolean isMutating(String query) {
+        return query.matches("(?is).*\\b(create|relate|delete|set)\\b.*");
+    }
+
 
     public String tableColumns(String tableName, String columnPrefix) throws SQLException
     {
@@ -478,13 +261,13 @@ public class Neo4jConnection
         return columnsBuilder.toString();
     }
 
-    public Iterable<ReturnExpression> returnProperties(String tableName, String columnPrefix) throws SQLException
+    public Iterable<Expression> returnProperties(String tableName, String columnPrefix) throws SQLException
     {
         ResultSet columns = executeQuery(driver.getQueries().getColumns(tableName));
-        List<ReturnExpression> properties = new ArrayList<ReturnExpression>();
+        List<Expression> properties = new ArrayList<Expression>();
         while (columns.next())
         {
-            properties.add(ReturnExpression.properties(columnPrefix+"."+columns.getString("property.name")));
+            properties.add(CypherQuery.identifier(columnPrefix).property(columns.getString("property.name")));
         }
         return properties;
     }
@@ -496,28 +279,12 @@ public class Neo4jConnection
 
     protected ResultSet toResultSet(ExecutionResult result) throws SQLException
     {
-        ResultSetBuilder rs = new ResultSetBuilder();
-        for (String column : result.columns())
-        {
-            rs.column(column);
-        }
-
-        for (Map<String, Object> row : result)
-        {
-            rs.rowData(row.values());
-        }
-
-        return rs.newResultSet(this);
+        return new IteratorResultSet(this,result.columns(), result.getResult());
     }
 
     public <T> T debug(T obj)
     {
-        if (debug)
-        {
-            Class intf = obj.getClass().getInterfaces()[0];
-            return (T) CallProxy.proxy(intf, obj);
-        } else
-            return obj;
+        return Connections.debug(obj,debug);
     }
 
     public Properties getProperties()
@@ -530,8 +297,8 @@ public class Neo4jConnection
         return driver;
     }
 
-    public String getDatabaseProductVersion()
+    public Version getVersion()
     {
-        return databaseProductVersion;
+        return version;
     }
 }

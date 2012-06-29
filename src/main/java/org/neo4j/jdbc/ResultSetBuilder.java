@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class ResultSetBuilder
 {
-    private List<ListResultSet.ColumnMetaData> columns = new ArrayList<ListResultSet.ColumnMetaData>();
+    private List<Neo4jColumnMetaData> columns = new ArrayList<Neo4jColumnMetaData>();
 
     private List<List<Object>> data = new ArrayList<List<Object>>();
 
@@ -45,7 +45,7 @@ public class ResultSetBuilder
         else if (type == Types.INTEGER)
             typeName = Integer.class.getName();
         
-        columns.add(new ListResultSet.ColumnMetaData(name, typeName, type));
+        columns.add(new Neo4jColumnMetaData(name, typeName, type));
         return this;
     }
 
@@ -89,7 +89,7 @@ public class ResultSetBuilder
     {
         for (int i = 0; i < columns.size(); i++)
         {
-            ListResultSet.ColumnMetaData columnMetaData = columns.get(i);
+            Neo4jColumnMetaData columnMetaData = columns.get(i);
             if (columnMetaData.getName().equals(name))
                 return i;
         }

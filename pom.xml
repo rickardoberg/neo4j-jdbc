@@ -3,13 +3,14 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.neo4j</groupId>
     <artifactId>neo4j-jdbc</artifactId>
-    <version>1.8-SNAPSHOT</version>
+    <version>1.6-SNAPSHOT</version>
     <name>Neo4j JDBC Driver</name>
     <description>Neo4j JDBC Driver</description>
     <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
 
     <properties>
-        <neo4j.version>1.8-SNAPSHOT</neo4j.version>
+        <neo4j.version>1.6-SNAPSHOT</neo4j.version>
+        <neo4j.version>1.6-SNAPSHOT</neo4j.version>
         <bundle.namespace>org.neo4j.cypherdsl</bundle.namespace>
         <short-name>neo4j-jdbc</short-name>
         <license-text.header>GPL-3-header.txt</license-text.header>
@@ -67,27 +68,101 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-cypher-dsl</artifactId>
-            <version>1.6-SNAPSHOT</version>
+            <version>1.7</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-core-asl</artifactId>
-            <version>1.9.1</version>
+            <version>1.8.3</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
             <artifactId>jackson-mapper-asl</artifactId>
-            <version>1.9.1</version>
+            <version>1.8.3</version>
         </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>${neo4j.version}</version>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j-kernel</artifactId>
+            <version>${neo4j.version}</version>
+            <type>test-jar</type>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Testing -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.4</version>
         </dependency>
+	      <dependency>
+	      <groupId>org.neo4j.app</groupId>
+	      <artifactId>neo4j-server</artifactId>
+	      <version>${neo4j.version}</version>
+	      <exclusions>
+	          <exclusion>
+	              <groupId>org.neo4j</groupId>
+	              <artifactId>neo4j-shell</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>org.neo4j</groupId>
+	              <artifactId>neo4j</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>ch.qos.logback</groupId>
+	              <artifactId>logback-access</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>ch.qos.logback</groupId>
+	              <artifactId>logback-classic</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>janino</groupId>
+	              <artifactId>janino</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>com.tinkerpop.gremlin</groupId>
+	              <artifactId>gremlin-groovy</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>com.tinkerpop.blueprints</groupId>
+	              <artifactId>blueprints-neo4j-graph</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>com.sun.jersey.contribs</groupId>
+	              <artifactId>jersey-multipart</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>org.rrd4j</groupId>
+	              <artifactId>rrd4j</artifactId>
+	          </exclusion>
+	          <exclusion>
+	              <groupId>bouncycastle</groupId>
+	              <artifactId>bcprov-jdk16</artifactId>
+	          </exclusion>
+	      </exclusions>
+	      <scope>test</scope>
+	    </dependency>
     </dependencies>
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>2.1</version>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.9</version>
@@ -102,8 +177,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <appendAssemblyId>false</appendAssemblyId>
-
+                    <appendAssemblyId>true</appendAssemblyId>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>

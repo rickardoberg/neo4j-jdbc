@@ -20,32 +20,39 @@
 
 package org.neo4j.jdbc;
 
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Cypher execution result.
  */
-public class ExecutionResult implements Iterable<Map<String,Object>>
+public class ExecutionResult implements Iterable<Object[]>
 {
-    private Iterable<String> columns;
-    private Iterable<Map<String,Object>> result;
+    private List<String> columns;
+    private Iterator<Object[]> result;
+    private final boolean isLazy;
 
-    public ExecutionResult(Iterable<String> columns, Iterable<Map<String, Object>> result)
+    public ExecutionResult(List<String> columns, Iterator<Object[]> result)
     {
         this.columns = columns;
         this.result = result;
+        isLazy = !(result instanceof Collection);
     }
 
-    public Iterable<String> columns()
+    public List<String> columns()
     {
         return columns;
     }
 
+    public boolean isLazy() {
+        return isLazy;
+    }
     @Override
-    public Iterator<Map<String, Object>> iterator()
+    public Iterator<Object[]> iterator()
     {
-        return result.iterator();
+        return result;
     }
 
     @Override
@@ -53,6 +60,10 @@ public class ExecutionResult implements Iterable<Map<String,Object>>
     {
         String result = "Columns:"+columns;
         result+="\n"+this.result;
+        return result;
+    }
+
+    public Iterator<Object[]> getResult() {
         return result;
     }
 }

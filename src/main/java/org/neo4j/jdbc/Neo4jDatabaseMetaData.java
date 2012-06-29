@@ -99,7 +99,7 @@ public class Neo4jDatabaseMetaData
     @Override
     public String getDatabaseProductVersion() throws SQLException
     {
-        return connection.getDatabaseProductVersion();
+        return connection.getVersion().getVersion();
     }
 
     @Override
@@ -839,7 +839,7 @@ public class Neo4jDatabaseMetaData
                     cell("COLUMN_NAME", result.getString("property.name")).
                     cell("COLUMN_SIZE", 256).
                     cell("DECIMAL_DIGITS", 256).
-                    cell("DATA_TYPE", Types.VARCHAR).
+                    cell("DATA_TYPE", Types.VARCHAR). // TODO
                     cell("TYPE_NAME", "VARCHAR");
         }
         return connection.debug(rs.newResultSet(connection));
@@ -1053,14 +1053,13 @@ public class Neo4jDatabaseMetaData
     @Override
     public int getDatabaseMajorVersion() throws SQLException
     {
-        return Integer.parseInt(getDatabaseProductVersion().substring(0, 1));
+        return connection.getVersion().getMajorVersion();
     }
 
     @Override
     public int getDatabaseMinorVersion() throws SQLException
     {
-        String[] versionParts = getDatabaseProductVersion().split("\\.");
-        return Integer.parseInt(versionParts[1]);
+        return connection.getVersion().getMinorVersion();
     }
 
     @Override

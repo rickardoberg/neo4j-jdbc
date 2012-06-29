@@ -24,6 +24,10 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Transaction;
+import org.neo4j.test.ImpermanentGraphDatabase;
 
 import java.security.PrivateKey;
 import java.sql.Connection;
@@ -35,36 +39,29 @@ import java.util.Properties;
 /**
  * TODO
  */
-public class Neo4jDatabaseMetaDataTest
+public class Neo4jDatabaseMetaDataTest extends Neo4jJdbcTest
 {
-    private static Connection conn;
 
-    @BeforeClass
-    public static void before() throws SQLException
-    {
-        DriverManager.registerDriver(new Driver());
-
-        conn = DriverManager.getConnection("jdbc:neo4j://localhost:7474/?debug=true", new Properties());
-    }
-
-    @AfterClass
-    public static void after()
-    {
-        try
-        {
-            conn.close();
-        } catch (Throwable e)
-        {
-            e.printStackTrace();
-        }
+    public Neo4jDatabaseMetaDataTest(Mode mode) throws SQLException {
+        super(mode);
     }
 
     @Test
     public void testGetTables() throws SQLException
     {
+        createTableMetaData(gdb);
         ResultSet rs = conn.getMetaData().getTables(null, null, "%", null);
 
         System.out.println(rs);
+    }
+
+    private void createTableMetaData(GraphDatabaseService gdb) {
+        final Transaction tx = gdb.beginTx();
+        final Node tables = gdb.createNode();
+        final Node table = gdb.createNode();
+        final Node column = gdb.createNode();
+
+        tx.success();tx.finish();
     }
 
     @Test

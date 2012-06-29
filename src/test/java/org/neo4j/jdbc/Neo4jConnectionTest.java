@@ -23,34 +23,22 @@ package org.neo4j.jdbc;
 import org.hamcrest.CoreMatchers;
 import org.junit.*;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.SQLException;
-import java.util.Properties;
+import java.sql.*;
 
-/**
- * TODO
- */
-public class Neo4jConnectionTest
-{
-    private static Connection conn;
+import org.neo4j.cypherdsl.query.CommonProperty;
+import org.neo4j.cypherdsl.query.Expression;
 
-    @BeforeClass
-    public static void before() throws SQLException
-    {
-        conn = new Driver().connect("jdbc:neo4j://localhost:7474/", new Properties());
-    }
+import static org.junit.Assert.*;
 
-    @AfterClass
-    public static void after()
-    {
-        try
-        {
-            conn.close();
-        } catch (Throwable e)
-        {
-            e.printStackTrace();
-        }
+public class Neo4jConnectionTest extends Neo4jJdbcTest {
+
+    private String columName = "propName";
+    private String tableName = "test";
+    private String columnPrefix = "_";
+    private final String columnType = "String";
+
+    public Neo4jConnectionTest(Mode mode) throws SQLException {
+        super(mode);
     }
 
     @Test
@@ -58,6 +46,50 @@ public class Neo4jConnectionTest
     {
         DatabaseMetaData metaData = conn.getMetaData();
         Assert.assertThat(metaData, CoreMatchers.<DatabaseMetaData>notNullValue());
-        Assert.assertTrue(metaData.getDatabaseProductVersion().startsWith("1.6"));
+        Assert.assertTrue(metaData.getDatabaseProductVersion().startsWith("1."));
+    }
+
+    @Override
+    @Before
+    public void setUp() throws Exception {
+        super.setUp();
+        createTableMetaData(gdb, tableName, columName, columnType);
+    }
+
+    @Test
+    public void testGetTableMetaDataTables() throws Exception {
+        final ResultSet rs = conn.getMetaData().getTables(null, null, tableName, null);
+        assertTrue(rs.next());
+        assertEquals(tableName,rs.getString("TABLE_NAME"));
+        assertFalse(rs.next());
+    }
+
+    @Test
+    public void testGetTableMetaDataColumns() throws Exception {
+        final ResultSet rs = conn.getMetaData().getColumns(null, null, tableName, null);
+        assertTrue(rs.next());
+        dumpColumns(rs);
+        assertEquals(tableName, rs.getString("TABLE_NAME"));
+        assertEquals(columName, rs.getString("COLUMN_NAME"));
+        assertEquals(Types.VARCHAR,rs.getInt("DATA_TYPE"));
+        assertFalse(rs.next());
+    }
+
+    @Test
+    public void testTableColumns() throws Exception {
+        final String res = conn.tableColumns(tableName, columnPrefix);
+        assertEquals(columnPrefix + columName,res);
+    }
+    @Test
+    public void testProperties() throws Exception {
+        final Iterable<Expression> res = conn.returnProperties(tableName, columnPrefix);
+        boolean found=false;
+        for (Expression expression : res) {
+            assertTrue(expression instanceof CommonProperty);
+            final CommonProperty property = (CommonProperty) expression;
+            assertEquals(columName,property.name.name);
+            found=true;
+        }
+        assertTrue(found);
     }
 }
