@@ -22,11 +22,10 @@ package org.neo4j.jdbc;
 
 import org.hamcrest.CoreMatchers;
 import org.junit.*;
+import org.neo4j.cypherdsl.Property;
+import org.neo4j.cypherdsl.expression.Expression;
 
 import java.sql.*;
-
-import org.neo4j.cypherdsl.query.CommonProperty;
-import org.neo4j.cypherdsl.query.Expression;
 
 import static org.junit.Assert.*;
 
@@ -85,9 +84,9 @@ public class Neo4jConnectionTest extends Neo4jJdbcTest {
         final Iterable<Expression> res = conn.returnProperties(tableName, columnPrefix);
         boolean found=false;
         for (Expression expression : res) {
-            assertTrue(expression instanceof CommonProperty);
-            final CommonProperty property = (CommonProperty) expression;
-            assertEquals(columName,property.name.name);
+            assertTrue(expression instanceof Property);
+            final Property property = (Property) expression;
+            assertEquals(columName,property.toString());
             found=true;
         }
         assertTrue(found);

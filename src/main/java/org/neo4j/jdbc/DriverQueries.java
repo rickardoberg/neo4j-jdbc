@@ -20,9 +20,9 @@
 
 package org.neo4j.jdbc;
 
-import org.neo4j.cypherdsl.Execute;
-import org.neo4j.cypherdsl.ExecuteWithParameters;
-import org.neo4j.cypherdsl.query.Expression;
+import org.neo4j.cypherdsl.expression.Expression;
+import org.neo4j.cypherdsl.grammar.Execute;
+import org.neo4j.cypherdsl.grammar.ExecuteWithParameters;
 
 import static org.neo4j.cypherdsl.CypherQuery.*;
 
@@ -33,30 +33,30 @@ public class DriverQueries
 {
     public Execute getTables()
     {
-        return start(node("n", 0)).
-                match(path().from("n").out("TYPE").to("type")).
+        return start(nodesById("n", 0)).
+                match(node("n").out("TYPE").node("type")).
                 returns(identifier("type").property("type"));
     }
 
     public Execute getColumns()
     {
-        return start(node("n", 0)).
-                match(path().from("n").out("TYPE").to("type").link().out("HAS_PROPERTY").to("property")).
+        return start(nodesById("n", 0)).
+                match(node("n").out("TYPE").node("type").out("HAS_PROPERTY").node("property")).
                 returns(identifier("type").property("type"), identifier("property").property("name"), identifier("property").property("type"));
     }
 
     public ExecuteWithParameters getColumns(String typeName)
     {
-        return start(node("n", 0)).
-                match(path().from("n").out("TYPE").to("type").link().out("HAS_PROPERTY").to("property")).
+        return start(nodesById("n", 0)).
+                match(node("n").out("TYPE").node("type").out("HAS_PROPERTY").node("property")).
                 where(identifier("type").string("type").eq(param("typename"))).
                 returns(identifier("type").string("type"), identifier("property").string("name"), identifier("property").string("type")).parameter("typename", typeName);
     }
     
     public ExecuteWithParameters getData(String typeName, Iterable<Expression> returnProperties)
     {
-        return start(node("n",0)).
-                match(path().from("n").out("TYPE").to("type").link().in("IS_A").to("instance")).
+        return start(nodesById("n",0)).
+                match(node("n").out("TYPE").node("type").in("IS_A").node("instance")).
                 where(identifier("type").string("type").eq(param("typename"))).
                 returns(returnProperties).
                 parameter("typename", typeName);

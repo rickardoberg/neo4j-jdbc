@@ -20,10 +20,9 @@
 
 package org.neo4j.jdbc.ext;
 
-import org.neo4j.cypherdsl.ExecuteWithParameters;
+import org.neo4j.cypherdsl.grammar.ExecuteWithParameters;
 import org.neo4j.jdbc.Driver;
 import org.neo4j.jdbc.Neo4jConnection;
-import org.restlet.Client;
 
 import java.sql.Connection;
 import java.sql.ResultSet;

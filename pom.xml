@@ -3,14 +3,13 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.neo4j</groupId>
     <artifactId>neo4j-jdbc</artifactId>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.8-SNAPSHOT</version>
     <name>Neo4j JDBC Driver</name>
     <description>Neo4j JDBC Driver</description>
     <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
 
     <properties>
-        <neo4j.version>1.6-SNAPSHOT</neo4j.version>
-        <neo4j.version>1.6-SNAPSHOT</neo4j.version>
+        <neo4j.version>1.8-SNAPSHOT</neo4j.version>
         <bundle.namespace>org.neo4j.cypherdsl</bundle.namespace>
         <short-name>neo4j-jdbc</short-name>
         <license-text.header>GPL-3-header.txt</license-text.header>
@@ -68,7 +67,7 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-cypher-dsl</artifactId>
-            <version>1.7</version>
+            <version>1.8-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
