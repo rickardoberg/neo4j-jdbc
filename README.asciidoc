@@ -6,6 +6,7 @@ JDBC is based on the relational paradigm, this driver provides a way to bridge t
 The textual representation of declarative queries in the Cypher query language which returns tabular results make it possible to use the JDBC concepts and APIs.
 
 The driver can be used in conjunction with 
+
 * a Neo4j Server
 * a on disk Neo4j database
 * an existing Neo4j GraphDatabaseService instance passed to the driver
