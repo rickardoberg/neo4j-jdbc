@@ -1,5 +1,10 @@
 package org.neo4j.jdbc.embedded;
 
+import java.sql.SQLException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.helpers.collection.IteratorWrapper;
@@ -7,14 +12,6 @@ import org.neo4j.jdbc.ExecutionResult;
 import org.neo4j.jdbc.QueryExecutor;
 import org.neo4j.jdbc.Version;
 import org.neo4j.kernel.GraphDatabaseAPI;
-import sun.misc.Unsafe;
-
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author mh
@@ -22,17 +19,6 @@ import java.util.Map;
  */
 public class EmbeddedQueryExecutor implements QueryExecutor {
 
-    private static sun.misc.Unsafe unsafe = getUnsafe();
-
-    private static Unsafe getUnsafe() {
-        try {
-            final Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
-            theUnsafe.setAccessible(true);
-            return (Unsafe) theUnsafe.get(null);
-        } catch (Exception e) {
-            throw new RuntimeException("Error accessing unsafe"+e);
-        }
-    }
 
     private final ExecutionEngine executionEngine;
     private final GraphDatabaseService gds;
@@ -70,13 +56,7 @@ public class EmbeddedQueryExecutor implements QueryExecutor {
 
     private boolean handleException(Exception cause, String query) {
         final SQLException sqlException = new SQLException("Error executing query: " + query, cause);
-        if (unsafe!=null) {
-            unsafe.throwException(sqlException);
-            return false;
-        }
-        else {
-            throw new RuntimeException(sqlException);
-        }
+        throw new RuntimeException(sqlException);
     }
 
     @Override
