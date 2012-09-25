@@ -51,6 +51,11 @@
             <name>Public online Restlet repository</name>
             <url>http://maven.restlet.org</url>
         </repository>
+        <repository>
+            <id>neo4jt</id>
+            <name>Public online neo4j repository</name>
+            <url>http://m2.neo4j.org/content/groups/public/</url>
+        </repository>
     </repositories>
 
     <dependencies>

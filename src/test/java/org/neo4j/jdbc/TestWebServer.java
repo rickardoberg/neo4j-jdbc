@@ -23,6 +23,7 @@ package org.neo4j.jdbc;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.junit.Ignore;
+import org.neo4j.kernel.AbstractGraphDatabase;
 import org.neo4j.kernel.GraphDatabaseAPI;
 import org.neo4j.server.NeoServer;
 import org.neo4j.server.configuration.Configurator;
@@ -48,7 +49,9 @@ import static org.neo4j.server.configuration.Configurator.*;
 */
 @Ignore
 public class TestWebServer extends Jetty6WebServer {
-    public TestWebServer(GraphDatabaseAPI gdb, int port) {
+    private GraphDatabaseAPI gdb;
+
+	public TestWebServer(GraphDatabaseAPI gdb, int port) {
         setPort(port);
         setNeoServer(createNeoServer(gdb, baseUri(port)));
         addJAXRSPackages(asList(REST_API_PACKAGE), DEFAULT_DATA_API_PATH);
@@ -66,7 +69,8 @@ public class TestWebServer extends Jetty6WebServer {
     }
 
     protected NeoServer createNeoServer(final GraphDatabaseAPI gdb, final URI baseUri) {
-        return new NeoServer() {
+        this.gdb = gdb;
+		return new NeoServer() {
             @Override
             public void init()
             {
@@ -89,7 +93,7 @@ public class TestWebServer extends Jetty6WebServer {
 
             @Override
             public Database getDatabase() {
-                return new Database(gdb);
+                return new Database((AbstractGraphDatabase) gdb);
             }
 
             @Override
