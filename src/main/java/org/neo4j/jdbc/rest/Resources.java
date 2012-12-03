@@ -41,12 +41,17 @@ public class Resources {
     }
 
     public DiscoveryClientResource getDiscoveryResource() throws IOException {
-        DiscoveryClientResource discovery = new DiscoveryClientResource(createContext(), ref, mapper);
-
-        if (hasAuth()) discovery.setAuth(user, password);
+        DiscoveryClientResource discovery = withAuth(new DiscoveryClientResource(createContext(), ref, mapper));
         discovery.readInformation();
         return discovery;
 
+    }
+
+    <T extends ClientResource> T withAuth(T resource) {
+        if (hasAuth()) {
+            resource.setChallengeResponse(ChallengeScheme.HTTP_BASIC, user, password);
+        }
+        return resource;
     }
 
     private boolean hasAuth() {
@@ -54,11 +59,11 @@ public class Resources {
     }
 
     public ClientResource getCypherResource(String cypherPath) {
-        return new CypherClientResource(new Context(), cypherPath, mapper);
+        return withAuth(new CypherClientResource(new Context(), cypherPath, mapper));
     }
 
     public JsonNode readJsonFrom(String uri) throws IOException {
-        ClientResource resource = new ClientResource(createContext(), uri);
+        ClientResource resource = withAuth(new ClientResource(createContext(), uri));
         resource.getClientInfo().setAcceptedMediaTypes(streamingJson());
         return mapper.readTree(resource.get().getReader());
     }
@@ -78,10 +83,6 @@ public class Resources {
             super(context, ref);
             this.mapper = mapper;
             getClientInfo().setAcceptedMediaTypes(streamingJson());
-        }
-
-        public void setAuth(String user, String password) {
-            setChallengeResponse(ChallengeScheme.HTTP_BASIC, user, password);
         }
 
         public String getVersion() {

@@ -7,6 +7,7 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ObjectNode;
 import org.neo4j.jdbc.*;
 import org.restlet.Client;
+import org.restlet.data.CharacterSet;
 import org.restlet.representation.Representation;
 import org.restlet.resource.ClientResource;
 import org.restlet.resource.ResourceException;
@@ -61,7 +62,7 @@ public class RestQueryExecutor implements QueryExecutor {
 
         final ClientResource resource = new ClientResource(cypherResource);
         Representation rep = resource.post(queryNode.toString());
-
+		rep.setCharacterSet(new CharacterSet("UTF-8"));
         JsonNode node = mapper.readTree(rep.getReader());
         final ResultParser parser = new ResultParser(node);
         return new ExecutionResult(parser.getColumns(), parser.streamData());

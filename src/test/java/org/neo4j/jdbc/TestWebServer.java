@@ -51,11 +51,12 @@ import static org.neo4j.server.configuration.Configurator.*;
 public class TestWebServer extends Jetty6WebServer {
     private GraphDatabaseAPI gdb;
 
-	public TestWebServer(GraphDatabaseAPI gdb, int port) {
+	public TestWebServer(GraphDatabaseAPI gdb, int port, boolean auth) {
         setPort(port);
         setNeoServer(createNeoServer(gdb, baseUri(port)));
         addJAXRSPackages(asList(REST_API_PACKAGE), DEFAULT_DATA_API_PATH);
         addJAXRSPackages(asList(DISCOVERY_API_PACKAGE), "/");
+        if (auth) addFilter(new TestAuthenticationFilter(),"/*");
         init();
     }
 
@@ -127,8 +128,8 @@ public class TestWebServer extends Jetty6WebServer {
         };
     }
 
-    public static WebServer startWebServer(ImpermanentGraphDatabase gdb, int port) {
-        final TestWebServer webServer = new TestWebServer(gdb, port);
+    public static WebServer startWebServer(ImpermanentGraphDatabase gdb, int port, boolean auth) {
+        final TestWebServer webServer = new TestWebServer(gdb, port,auth);
         webServer.start();
         return webServer;
     }

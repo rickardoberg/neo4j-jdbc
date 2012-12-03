@@ -33,7 +33,6 @@ import org.neo4j.test.ImpermanentGraphDatabase;
 import java.sql.*;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Properties;
 
 import static org.neo4j.jdbc.TestWebServer.startWebServer;
@@ -52,16 +51,17 @@ public class Neo4jJdbcTest {
     private static WebServer webServer;
     protected final Mode mode;
 
-    public enum Mode { embedded, server }
+    public enum Mode { embedded, server, server_auth }
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        return Arrays.<Object[]>asList(new Object[]{Mode.embedded},new Object[]{Mode.server});
+        return Arrays.<Object[]>asList(new Object[]{Mode.embedded},new Object[]{Mode.server},new Object[]{Mode.server_auth});
     }
 
     @BeforeClass
     public static void before() {
         gdb = new ImpermanentGraphDatabase();
     }
+
     public Neo4jJdbcTest(Mode mode) throws SQLException {
         this.mode = mode;
         System.out.println("Mode "+mode);
@@ -75,8 +75,16 @@ public class Neo4jJdbcTest {
                 break;
             case server:
                 if (webServer==null) {
-                    webServer = startWebServer(gdb, PORT);
+                    webServer = startWebServer(gdb, PORT,false);
                 }
+                conn = driver.connect("jdbc:neo4j://localhost:"+PORT, props);
+                break;
+            case server_auth:
+                if (webServer==null) {
+                    webServer = startWebServer(gdb, PORT,true);
+                }
+                props.put("user",TestAuthenticationFilter.USER);
+                props.put("password",TestAuthenticationFilter.PASSWORD);
                 conn = driver.connect("jdbc:neo4j://localhost:"+PORT, props);
                 break;
         }

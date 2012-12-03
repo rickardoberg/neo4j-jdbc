@@ -9,8 +9,8 @@
     <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
 
     <properties>
-        <neo4j.version>1.8-SNAPSHOT</neo4j.version>
-        <bundle.namespace>org.neo4j.cypherdsl</bundle.namespace>
+        <neo4j.version>1.8</neo4j.version>
+        <bundle.namespace>org.neo4j.jdbc</bundle.namespace>
         <short-name>neo4j-jdbc</short-name>
         <license-text.header>GPL-3-header.txt</license-text.header>
     </properties>
@@ -19,9 +19,9 @@
 
     <!--
       <scm>
-        <connection>scm:git:git://github.com/neo4j/cypher-dsl.git</connection>
-        <developerConnection>scm:git:git@github.com:neo4j/cypher-dsl.git</developerConnection>
-        <url>https://github.com/neo4j/cypher-dsl</url>
+        <connection>scm:git:git://github.com/neo4j/neo4j-jdbc.git</connection>
+        <developerConnection>scm:git:git@github.com:neo4j/neo4j-jdbc.git</developerConnection>
+        <url>https://github.com/neo4j/neo4j-jdbc</url>
       </scm>
     -->
 
@@ -52,9 +52,9 @@
             <url>http://maven.restlet.org</url>
         </repository>
         <repository>
-            <id>neo4jt</id>
-            <name>Public online neo4j repository</name>
-            <url>http://m2.neo4j.org/content/groups/public/</url>
+            <id>neo4j-snapshots</id>
+            <name>Neo4j Snapshots</name>
+            <url>http://m2.neo4j.org/snapshots</url>
         </repository>
     </repositories>
 
@@ -72,7 +72,7 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j-cypher-dsl</artifactId>
-            <version>1.8-SNAPSHOT</version>
+            <version>1.8</version>
         </dependency>
         <dependency>
             <groupId>org.codehaus.jackson</groupId>
