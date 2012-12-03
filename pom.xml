@@ -56,6 +56,11 @@
             <name>Neo4j Snapshots</name>
             <url>http://m2.neo4j.org/snapshots</url>
         </repository>
+        <repository>
+            <id>neo4j-releases</id>
+            <name>Neo4j Snapshots</name>
+            <url>http://m2.neo4j.org/releases</url>
+        </repository>
     </repositories>
 
     <dependencies>
