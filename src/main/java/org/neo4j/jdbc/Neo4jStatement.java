@@ -300,4 +300,11 @@ public class Neo4jStatement
     {
         return false;
     }
+
+    public void closeOnCompletion() throws SQLException {
+    }
+
+    public boolean isCloseOnCompletion() throws SQLException {
+        return false;
+    }
 }

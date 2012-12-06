@@ -30,6 +30,7 @@ import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * JDBC Driver implementation that is backed by a REST Neo4j Server.
@@ -123,5 +124,9 @@ public class Driver implements java.sql.Driver {
         if (databases == null)
             throw new SQLFeatureNotSupportedException("Embedded Neo4j not available please add neo4j-kernel, -index and -cypher to the classpath");
         return databases.createExecutor(connectionUrl,properties);
+    }
+
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        return null;
     }
 }

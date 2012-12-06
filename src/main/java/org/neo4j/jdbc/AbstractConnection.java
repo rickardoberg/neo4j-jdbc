@@ -24,6 +24,7 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.Executor;
 
 /**
  * @author mh
@@ -197,4 +198,23 @@ public abstract class AbstractConnection implements Connection {
     {
         return new HashMap<String, Class<?>>();
     }
+    
+    public void setSchema(String schema) throws SQLException {
+       
+    }
+
+    public String getSchema() throws SQLException {
+        return null;
+    }
+
+    public void abort(Executor executor) throws SQLException {
+    }
+
+    public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
+    }
+
+    public int getNetworkTimeout() throws SQLException {
+        return 0;
+    }
+    
 }

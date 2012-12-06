@@ -32,6 +32,7 @@ import org.neo4j.jdbc.rest.RestQueryExecutor;
 
 import java.sql.*;
 import java.util.*;
+import java.util.concurrent.Executor;
 
 /**
  * Implementation of Connection that delegates to the Neo4j REST API and sends queries as Cypher requests

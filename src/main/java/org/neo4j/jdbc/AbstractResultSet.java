@@ -320,6 +320,15 @@ public abstract class AbstractResultSet implements ResultSet {
     {
         return get(i);
     }
+    
+    public <T> T getObject(int columnIndex, Class<T> type) throws SQLException {
+        return type.cast(getObject(columnIndex));
+    }
+
+    public <T> T getObject(String columnLabel, Class<T> type) throws SQLException {
+        return type.cast(getObject(columnLabel));
+    }
+    
 
     @Override
     public Object getObject(String s) throws SQLException
