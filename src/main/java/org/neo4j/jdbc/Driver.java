@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  */
 public class Driver implements java.sql.Driver {
     private final static Log log = LogFactory.getLog(Driver.class);
-    public static final String CON_PREFIX = "jdbc:neo4j";
+    public static final String CON_PREFIX = "jdbc:neo4j:";
 
     static {
         try {
@@ -54,6 +54,7 @@ public class Driver implements java.sql.Driver {
     }
 
     public Neo4jConnection connect(String url, Properties properties) throws SQLException {
+    	if (!acceptsURL(url))return null;
         parseUrlProperties(url, properties);
 
         return Connections.create(this, url, properties);
