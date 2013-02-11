@@ -54,6 +54,15 @@ public class DriverTest extends Neo4jJdbcTest
         Assert.assertTrue(driver.acceptsURL(jdbcUrl()));
         Assert.assertTrue(!driver.acceptsURL("jdbc:derby://localhost:7474/"));
     }
+    
+    @Test
+    public void testConnect() throws SQLException
+    {
+    	final Properties properties = new Properties();
+    	properties.put("db",gdb);
+        Assert.assertNotNull(driver.connect("jdbc:neo4j:instance:db", properties));
+        Assert.assertNull(driver.connect("jdbc:derby://localhost:7474/", properties));
+    }
 
     @Test
     public void testURLProperties() throws SQLException
