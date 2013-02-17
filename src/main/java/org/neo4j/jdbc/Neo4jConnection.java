@@ -234,7 +234,9 @@ public class Neo4jConnection extends AbstractConnection {
         {
             final ExecutionResult result = queryExecutor.executeQuery(query, parameters);
             return debug(toResultSet(result));
-        } catch (Exception e)
+        } catch (SQLException e){
+        	throw e;
+        }catch (Exception e)
         {
             throw new SQLException(e);
         }
