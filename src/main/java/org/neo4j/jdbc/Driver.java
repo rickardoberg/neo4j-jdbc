@@ -20,11 +20,6 @@
 
 package org.neo4j.jdbc;
 
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.neo4j.graphdb.GraphDatabaseService;
-
 import java.sql.DriverManager;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
@@ -36,8 +31,7 @@ import java.util.logging.Logger;
  * JDBC Driver implementation that is backed by a REST Neo4j Server.
  */
 public class Driver implements java.sql.Driver {
-    private final static Log log = LogFactory.getLog(Driver.class);
-    public static final String CON_PREFIX = "jdbc:neo4j";
+    public static final String CON_PREFIX = "jdbc:neo4j:";
 
     static {
         try {
@@ -54,6 +48,7 @@ public class Driver implements java.sql.Driver {
     }
 
     public Neo4jConnection connect(String url, Properties properties) throws SQLException {
+    	if (!acceptsURL(url))return null;
         parseUrlProperties(url, properties);
 
         return Connections.create(this, url, properties);
@@ -107,23 +102,6 @@ public class Driver implements java.sql.Driver {
                 }
             }
         }
-    }
-
-    private final Databases databases = createDatabases();
-
-    private Databases createDatabases() {
-        try {
-            return (Databases)Class.forName("org.neo4j.jdbc.embedded.EmbeddedDatabases").newInstance();
-        } catch (Throwable e) {
-            if (log.isInfoEnabled()) log.info("Embedded Neo4j support not enabled "+e.getMessage());
-            return null;
-        }
-    }
-
-    public QueryExecutor createExecutor(String connectionUrl, Properties properties) throws SQLException {
-        if (databases == null)
-            throw new SQLFeatureNotSupportedException("Embedded Neo4j not available please add neo4j-kernel, -index and -cypher to the classpath");
-        return databases.createExecutor(connectionUrl,properties);
     }
 
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {

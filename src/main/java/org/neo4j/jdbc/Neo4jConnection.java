@@ -67,7 +67,7 @@ public class Neo4jConnection extends AbstractConnection {
         if (connectionUrl.contains("://"))
             return new RestQueryExecutor(connectionUrl,user,password);
 
-        return getDriver().createExecutor(connectionUrl,properties);
+        return DatabasesHolder.INSTANCE().createExecutor(connectionUrl,properties);
     }
 
     private String getPassword() {

@@ -9,12 +9,15 @@ import org.neo4j.test.ImpermanentGraphDatabase;
 
 import java.util.Properties;
 import java.util.WeakHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author mh
  * @since 15.06.12
  */
 public class EmbeddedDatabases implements Databases {
+	private static final Pattern urlMatcher=Pattern.compile(":([^:]*):(.+)"); 
     enum Type {
         mem {
             @Override
@@ -42,31 +45,35 @@ public class EmbeddedDatabases implements Databases {
         protected boolean isReadOnly(Properties properties) {
             return properties != null && properties.getProperty("readonly", "false").equalsIgnoreCase("true");
         }
-
-        public String getName(String url) {
-            if (url.matches(":" + name() + ":.+")) return url.substring(name().length() + 2);
-            return null;
-        }
     }
 
     private final WeakHashMap<String, GraphDatabaseService> databases = new WeakHashMap<String, GraphDatabaseService>();
 
-    public synchronized GraphDatabaseService createDatabase(String connectionUrl, Properties properties) {
-        for (Type type : Type.values()) {
-            String name = type.getName(connectionUrl);
-            if (name != null) {
-                GraphDatabaseService gds = databases.get(name);
-                if (gds == null) {
-                    gds = type.create(name, properties);
-                    databases.put(name, gds);
-                }
-                return gds;
-            }
-        }
-        return new ImpermanentGraphDatabase();
+    public GraphDatabaseService createDatabase(String connectionUrl, Properties properties) {
+    	Matcher matcher=urlMatcher.matcher(connectionUrl);
+    	if (!matcher.find())return defaultImpermanentDb();
+    	try{
+    		Type type=Type.valueOf(matcher.group(1));
+    		String name=matcher.group(2);
+    		GraphDatabaseService gds = databases.get(name);
+    		if (gds!=null)return gds;
+    		synchronized(urlMatcher){
+    			gds = databases.get(name);
+    			if (gds != null) return gds;
+    			gds = type.create(name, properties);
+    			databases.put(name, gds);
+    		}
+            return gds;
+    	}catch(IllegalArgumentException e){
+    		return defaultImpermanentDb();
+    	}
     }
 
-    public QueryExecutor createExecutor(String connectionUrl, Properties properties) {
+    private GraphDatabaseService defaultImpermanentDb() {
+    	return new ImpermanentGraphDatabase();
+	}
+
+	public QueryExecutor createExecutor(String connectionUrl, Properties properties) {
         GraphDatabaseService gds = createDatabase(connectionUrl, properties);
         return new EmbeddedQueryExecutor(gds);
     }
