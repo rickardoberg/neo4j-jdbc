@@ -58,49 +58,44 @@ public class RestQueryExecutor implements QueryExecutor {
     }
 
     public ExecutionResult executeQuery(String query, Map<String, Object> parameters) throws SQLException {
-    	final ClientResource resource = new ClientResource(cypherResource);
-    	ObjectNode queryNode = queryParameter(query, parameters);
-    	try {        
-    		Representation rep = resource.post(queryNode.toString());
-    		rep.setCharacterSet(new CharacterSet("UTF-8"));
-    		JsonNode node = mapper.readTree(rep.getReader());
-    		final ResultParser parser = new ResultParser(node);
-    		return new ExecutionResult(parser.getColumns(), parser.streamData());
-    	} catch (ResourceException e){
-    		extractErrorMessage(resource, e);
-    		throw new SQLException(e.getStatus().getReasonPhrase(),e);
-    	} catch (JsonProcessingException e) {
-    		throw new SQLException(e);
-    	} catch (IOException e) {
-    		throw new SQLException(e);
-    	}
+        final ClientResource resource = new ClientResource(cypherResource);
+        try {
+            ObjectNode queryNode = queryParameter(query, parameters);
+            Representation rep = resource.post(queryNode.toString());
+            rep.setCharacterSet(new CharacterSet("UTF-8"));
+            JsonNode node = mapper.readTree(rep.getReader());
+            final ResultParser parser = new ResultParser(node);
+            return new ExecutionResult(parser.getColumns(), parser.streamData());
+        } catch (ResourceException e) {
+            String msg=extractErrorMessage(resource);
+            if (msg!=null) throw new SQLException(msg,e);
+            throw new SQLException(e.getStatus().getReasonPhrase(), e);
+        } catch (JsonProcessingException e) {
+            throw new SQLException(e);
+        } catch (IOException e) {
+            throw new SQLException(e);
+        }
     }
 
     /**
-     * When REST error, JSON can contains error message
-     * We can get this message to send back to user instead of the common message.  
-     * 
-     * @param resource HTTP resource
-     * @param e main exception we wrap into exception we create
-     * @throws SQLException if an error message can be retrieved, send this exception 
+     * When a REST error occurs, the JSON can contain an error message
      */
-    private void extractErrorMessage(ClientResource resource, Exception e)throws SQLException {
-    	Response resp=resource.getResponse();
-    	if (resp==null)return;
-		Representation rep=resp.getEntity();
-		rep.setCharacterSet(new CharacterSet("UTF-8"));
-		JsonNode node = null;
-		try{
-			node = mapper.readTree(rep.getReader());
-		}catch(Exception ex){
-			log.info("Cannot get error message. Generic message will be sent");
-			return;
-		}
-		if (node==null)return;
-		JsonNode msg = node.findValue("message");
-		if (msg==null)return;
-		throw new SQLException(msg.getTextValue(), e);
-	}
+    private String extractErrorMessage(ClientResource resource) {
+        try {
+            Response resp = resource.getResponse();
+            if (resp == null) return null;
+            Representation rep = resp.getEntity();
+            rep.setCharacterSet(new CharacterSet("UTF-8"));
+
+            JsonNode node = mapper.readTree(rep.getReader());
+            if (node == null) return null;
+            JsonNode msg = node.findValue("message");
+            if (msg == null) return null;
+            return msg.getTextValue();
+        } catch (Exception ex) {
+            return null;
+        }
+    }
 
 	@Override
     public void stop() throws Exception {

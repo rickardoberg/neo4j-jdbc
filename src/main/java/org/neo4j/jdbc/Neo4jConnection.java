@@ -67,7 +67,7 @@ public class Neo4jConnection extends AbstractConnection {
         if (connectionUrl.contains("://"))
             return new RestQueryExecutor(connectionUrl,user,password);
 
-        return DatabasesHolder.INSTANCE().createExecutor(connectionUrl,properties);
+        return getDriver().createExecutor(connectionUrl,properties);
     }
 
     private String getPassword() {
@@ -234,9 +234,12 @@ public class Neo4jConnection extends AbstractConnection {
         {
             final ExecutionResult result = queryExecutor.executeQuery(query, parameters);
             return debug(toResultSet(result));
-        } catch (SQLException e){
+        }
+        catch (SQLException e)
+        {
         	throw e;
-        }catch (Exception e)
+        }
+        catch (Exception e)
         {
             throw new SQLException(e);
         }
