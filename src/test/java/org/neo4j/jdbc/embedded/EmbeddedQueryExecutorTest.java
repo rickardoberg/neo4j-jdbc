@@ -15,8 +15,8 @@ public class EmbeddedQueryExecutorTest {
     @Test
     public void testDoExecuteQuery() throws Exception {
         final EmbeddedQueryExecutor executor = new EmbeddedQueryExecutor(new ImpermanentGraphDatabase());
-        final ExecutionResult result = executor.executeQuery("start n=node(0) return ID(n) as n", null);
-        assertEquals(asList("n"),result.columns());
+        final ExecutionResult result = executor.executeQuery("start n=node(0) return ID(n) as id", null);
+        assertEquals(asList("id"),result.columns());
         final Object[] row = result.iterator().next();
         assertEquals(1, row.length);
         assertEquals(0L, row[0]);

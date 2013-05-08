@@ -1,6 +1,7 @@
 package org.neo4j.jdbc;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.jdbc.embedded.EmbeddedDatabases;
@@ -56,6 +57,7 @@ public class DatabasesTest {
         assertSame(db2,db);
     }
     @Test
+    @Ignore("readonly mode in parallel is no longer supported")
     public void testLocateFileDbReadonly() throws Exception {
         FileUtils.deleteRecursively(new File("target/test-db-ro"));
         new EmbeddedGraphDatabase("target/test-db-ro");

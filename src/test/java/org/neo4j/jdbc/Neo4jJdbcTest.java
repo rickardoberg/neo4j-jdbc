@@ -27,15 +27,21 @@ import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.kernel.GraphDatabaseAPI;
+import org.neo4j.server.WrappingNeoServer;
+import org.neo4j.server.configuration.Configurator;
+import org.neo4j.server.configuration.ServerConfigurator;
 import org.neo4j.server.web.WebServer;
 import org.neo4j.test.ImpermanentGraphDatabase;
 
-import java.sql.*;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
-import static org.neo4j.jdbc.TestWebServer.startWebServer;
+import static org.neo4j.helpers.collection.MapUtil.stringMap;
 
 /**
  * @author mh
@@ -52,14 +58,16 @@ public class Neo4jJdbcTest {
     protected final Mode mode;
 
     public enum Mode { embedded, server, server_auth }
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.<Object[]>asList(new Object[]{Mode.embedded},new Object[]{Mode.server},new Object[]{Mode.server_auth});
+//        return Arrays.<Object[]>asList(new Object[]{Mode.server_tx});
     }
 
     @BeforeClass
     public static void before() {
-        gdb = new ImpermanentGraphDatabase();
+        gdb = new ImpermanentGraphDatabase(stringMap("cache_type","none"));
     }
 
     public Neo4jJdbcTest(Mode mode) throws SQLException {
@@ -75,7 +83,7 @@ public class Neo4jJdbcTest {
                 break;
             case server:
                 if (webServer==null) {
-                    webServer = startWebServer(gdb, PORT,false);
+                    webServer = startWebServer(gdb,PORT,false);
                 }
                 conn = driver.connect("jdbc:neo4j://localhost:"+PORT, props);
                 break;
@@ -84,10 +92,20 @@ public class Neo4jJdbcTest {
                     webServer = startWebServer(gdb, PORT,true);
                 }
                 props.put("user",TestAuthenticationFilter.USER);
-                props.put("password",TestAuthenticationFilter.PASSWORD);
+                props.put("password", TestAuthenticationFilter.PASSWORD);
                 conn = driver.connect("jdbc:neo4j://localhost:"+PORT, props);
                 break;
         }
+    }
+
+    private WebServer startWebServer(GraphDatabaseAPI gdb, int port, boolean auth) {
+        final ServerConfigurator config = new ServerConfigurator(gdb);
+        config.configuration().setProperty(Configurator.WEBSERVER_PORT_PROPERTY_KEY,port);
+        final WrappingNeoServer wrappingNeoServer = new WrappingNeoServer(gdb, config);
+        final WebServer webServer = wrappingNeoServer.getWebServer();
+        if (auth) webServer.addFilter(new TestAuthenticationFilter(), "/*");
+        wrappingNeoServer.start();
+        return webServer;
     }
 
 
@@ -136,7 +154,8 @@ public class Neo4jJdbcTest {
         property.setProperty("name",propName);
         property.setProperty("type",propType);
         type.createRelationshipTo(property,DynamicRelationshipType.withName("HAS_PROPERTY"));
-        tx.success();tx.finish();
+        tx.success();
+        tx.finish();
     }
 
     protected void dumpColumns(ResultSet rs) throws SQLException {
@@ -145,5 +164,10 @@ public class Neo4jJdbcTest {
         for (int col=1;col<cols;col++) {
             System.out.println(meta.getColumnName(col));
         }
+    }
+
+    protected Version getVersion() {
+        final String releaseVersion = gdb.getKernelData().version().getRevision();
+        return new Version(releaseVersion);
     }
 }
