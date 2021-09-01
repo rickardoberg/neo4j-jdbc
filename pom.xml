@@ -9,7 +9,7 @@
     <url>http://components.neo4j.org/${project.artifactId}/${project.version}</url>
 
     <properties>
-        <neo4j.version>1.9.RC2</neo4j.version>
+        <neo4j.version>3.5.0</neo4j.version>
         <bundle.namespace>org.neo4j.jdbc</bundle.namespace>
         <short-name>neo4j-jdbc</short-name>
         <license-text.header>GPL-3-header.txt</license-text.header>
